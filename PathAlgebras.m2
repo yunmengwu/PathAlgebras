@@ -585,7 +585,7 @@ paGraph (List,List,Matrix) := opts -> (verts,edges,adj) -> (
   if any(flatten entries adj, e -> e < 0) then error "Expected a non-negative integer matrix.";
   if numrows adj != numcols adj then error "Expected a square matrix.";
   if numrows adj != #verts then error "Expected compatible vertex list";
-  entriesAdj := flatten entries transpose adj;
+  entriesAdj := flatten entries adj;
   numEdges := sum entriesAdj;
   if numEdges != #edges then error "Expected compatible edge list.";
   -- building the hash table which allows for easy source/target information about an edge
