@@ -1,7 +1,7 @@
 newPackage("PathAlgebras",
      Headline => "data types for path algebras",
-     Version => "0.1",
-     Date => "Feb 8 2022",
+     Version => "0.2",
+     Date => "Apr 18 2023",
      Authors => {
 	  {Name => "Frank Moore",
 	   HomePage => "http://www.math.wfu.edu/Faculty/Moore.html",
