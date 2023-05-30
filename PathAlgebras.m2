@@ -1,6 +1,6 @@
 newPackage("PathAlgebras",
      Headline => "data types for path algebras",
-     Version => "0.2",
+     Version => "0.3",
      Date => "Apr 18 2023",
      Authors => {
 	  {Name => "Frank Moore",
