@@ -12,7 +12,7 @@ newPackage("PathAlgebras",
      Keywords => {"Noncommutative Algebra", "Path Algebra"},
      AuxiliaryFiles => true,
      DebuggingMode => true,
-     CacheExampleOutput => false
+     CacheExampleOutput => true
      )
 --added "paPath" for example purpose
 export { "PAPath","paPath", -- not exporting paPath constructor
@@ -3169,7 +3169,7 @@ findReducePositions(BettiTally) := B -> (
 )
 *-
 --load "/Users/y.w./WFU/Spring2022/M2/PathAlgebrasDoc.m2"
---load "PathAlgebrasDoc.m2"
+load "/Users/y.w./github/Pathalgebras/PathAlgebrasDoc.m2"
 --load "PathAlgebrasCheck.m2"  
 end
 
@@ -3178,7 +3178,7 @@ restart
 uninstallPackage "PathAlgebras"
 restart
 debug needsPackage "PathAlgebras"
-check PathAlgebras
+--check PathAlgebras
 installPackage "PathAlgebras"
 viewHelp "PathAlgebras"
 restart
@@ -3222,42 +3222,7 @@ isSubVector(PAVector,PAVector) := (f,g) ->(
     else return false    
 )
 
-endVertexLabel PAPath := p -> (
-    plist := p.edgeList;
-    graphHash := p.graph.edgeHash;
-    edgeLabel := p.graph.edgeLabels;
-    return edgeLabel#(last graphHash#(last p.edgeList))
-)
 
-
-startVertexLabel PAPath := p -> (
-    plist := p.edgeList;
-    graphHash := p.graph.edgeHash;
-    edgeLabel := p.graph.edgeLabels;
-    return edgeLabel#(first graphHash#(first p.edgeList))
-)
-
-edgesOrigin = method()
-edgesOrigin(PAElement) := f -> (
-    key := keys f.terms;
-    ver := first key;
-    if #(key) > 1 then error "Input must be one edge.";
-    if vertex.edgeList != {} then error "Input must be an edge.";
-    vernum := ver.vertex;
-    return select(f.ring.edgeGens, p -> startVertex p == vernum)
-
-)
-
-
-edgesTerminus = method()
-edgesTerminus(PAElement) := f -> (
-    key := keys f.terms;
-    ver := first key;
-    if #(key) > 1 then error "Input must be one edge.";
-    if vertex.edgeList != {} then error "Input must be an edge.";
-    vernum := ver.vertex;
-    return select(f.ring.edgeGens, p -> endVertex p == vernum)
-)
 *- 
 
 restart
@@ -3310,7 +3275,6 @@ paMap = f -> sum apply(pairs f.terms, p -> (((p#0).edgeList) / varMap // product
 gbJ == gbI / paMap
 
 
---JW
 restart
 debug needsPackage "PathAlgebras"
 M = matrix {{1,0},{1,1}}
@@ -5099,21 +5063,6 @@ GAMS3 = getGammaHash({a_4},I,DegreeLimit => 15)
 apply(6, i -> getReducedBT(GAMS3,i))
 
 
-restart
-debug needsPackage "PathAlgebras"
-M = matrix {{3}}
-G = paGraph({v},{x,y,z},M)
-R = QQ
-A = R G
-
-L = x^2*y*z - x*y^2*z + y*z*x^2 - y^2*x*z
-f = x*y - y*x
-g = y*z - z*y
-h = x*z - z*x
-divAlgorithm({f,g},L)
-divAlgorithm({g,f},L)
-divAlgorithm({f,g,h},L)
-
 
 restart
 debug needsPackage "PathAlgebras"
@@ -5158,23 +5107,6 @@ A = R G
 I = {a*a*c*c*a*c*c-a*b*c*b,c*c*a*c*c*b-a}
 overlaps(I#0,I#1)
 
-
---Div Alg Example
-restart
-debug needsPackage "PathAlgebras"
-M = matrix {{3}}
-G = paGraph({v},{x,y,z},M)
-R = QQ
-A = R G
-
-L = x^2*y*z - x*y^2*z + y*z*x^2 - y^2*x*z
-f = x*y - y*x
-g = y*z - z*y
-h = x*z - z*x
-divAlgorithm({f,g},L)
-divAlgorithm({g,f},L)
-divAlgorithm({f,g,h},L)
-divAlgorithm({g,h,f},L)
 
 
 --S_1 projective resolution

@@ -233,6 +233,34 @@ doc ///
 ///
 
 doc ///
+  Key
+    GTN
+  Headline
+    Type of Gamma Tree Node
+  Description
+    Text
+     "..."
+  SeeAlso
+     "to do"
+///
+
+
+doc ///
+  Key
+    GAMMA
+  Headline
+    Type of 
+  Description
+    Text
+     "..."
+  SeeAlso
+     "to do"
+///
+
+
+
+
+doc ///
    Key
      (symbol +, PAMatrix, PAMatrix)
    Headline
@@ -1155,7 +1183,7 @@ doc ///
 
 
 ///
-
+-*
 doc ///
   Key
    leadTermCoeff
@@ -1207,7 +1235,7 @@ doc ///
       L = 5*e0*e*f*g+4*e0*e*f+3*e0*f*g
       leadTermCoeff(L)
 ///	      
-	      
+*-	      
 	      
 doc ///
   Key
@@ -2274,7 +2302,7 @@ doc ///
 	peek ov
 ///
 
-
+-*
 doc ///
    Key
      overlaps
@@ -2300,9 +2328,16 @@ doc ///
 	I = paIdeal {2*a*b + 3*b*a + 5*c^2,2*b*c + 3*c*b + 5*a^2,2*c*a + 3*a*c + 5*b^2}
 	ov = overlaps((I.generators)#1,(I.generators)#2)
 	peek ov
+      Example
+      	M = matrix {{3}}
+	G = paGraph({v},{a,b,c},M)
+	R = QQ
+	A = R G
+	I = {a*a*c*c*a*c*c-a*b*c*b,c*c*a*c*c*b-a}
+	overlaps(I#0,I#1)
 
 ///
-
+*-
 doc ///
    Key
      (overlaps,PAVector,PAElement,ZZ)
@@ -2525,7 +2560,7 @@ doc ///
         d=a+b+c
 	lp=leadPair(d)
 ///
-
+-*
 doc ///
    Key
       isVertex
@@ -2550,7 +2585,7 @@ doc ///
 	isVertex(b)
 
 ///
-
+*-
 doc ///
    Key
       (isVertex, PAElement)
@@ -2709,7 +2744,7 @@ doc ///
 
 ///
 
-
+-*
 
 doc ///
    Key
@@ -2739,7 +2774,7 @@ doc ///
 	 L = {f,g,h}
 	 putInPathAlgebra(A,L)	
 ///
-
+*-
 doc ///
    Key
       (putInPathAlgebra,PathAlgebra,PAPath,RingElement)
@@ -2824,7 +2859,7 @@ doc ///
 	 S = R/I
 	 y = putInPathAlgebra(S,paPath(G,{0,0}),3_(kk))
 ///
-
+-*
 doc ///
    Key
       isSubModMon
@@ -2938,7 +2973,7 @@ doc ///
 	 isSubModMon(K,H)
 
 ///
-
+*-
 doc ///
    Key
       allSubModMon
@@ -3171,7 +3206,7 @@ doc ///
         "TO DO"	
 ///
 
-
+-*
 doc ///
    Key
       divAlgorithm
@@ -3190,10 +3225,21 @@ doc ///
         This functions returns a remainder of f divided by a list of PAPaths.
 	The first entry of return value gives the remainder.
       Example
-        "TO DO"
+        M = matrix {{3}}
+	G = paGraph({v},{x,y,z},M)
+	R = QQ
+	A = R G
+	L = x^2*y*z - x*y^2*z + y*z*x^2 - y^2*x*z
+	f = x*y - y*x
+	g = y*z - z*y
+	h = x*z - z*x
+	divAlgorithm({f,g},L)
+	divAlgorithm({g,f},L)
+	divAlgorithm({f,g,h},L)
+	divAlgorithm({g,h,f},L)
 	
 ///
-
+*-
 doc ///
    Key
       numEdges
