@@ -289,8 +289,6 @@ isSubpath (PAElement,PAElement) := (p,q) ->(
        if last isSubword(lelp,lelq) > 0 then(
 	    u = take(lelq,{0,last isSubword(lelp,lelq)-1});
 	    uedges = (leadCoefficient p / (leadCoefficient q))*putInPathAlgebra(A,u);
-	    --uedges = (leadTermCoeff q / (leadTermCoeff p))*putInPathAlgebra(A,paPath(A.graph,u));
-	    --changed 12/9
 	    );
     
        if last isSubword(lelp,lelq) < (length lelq - length lelp) then (

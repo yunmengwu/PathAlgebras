@@ -1183,59 +1183,7 @@ doc ///
 
 
 ///
--*
-doc ///
-  Key
-   leadTermCoeff
-    (leadTermCoeff,PAElement)
-  Headline
-    Find the coefficient of the lead term of a PAElement.
-  Usage
-    L = leadTermCoeff(f)
-  Inputs
-    f:PAElement
-  Outputs
-    L:RingElement
-  Description
-    Text
-      This function finds the coefficient of the lead term of a PAElement.
-
-    Example
-      M = matrix {{1,0},{1,1}}
-      G = paGraph({v,w},{e,f,g},M,Weights=>{2,1,1},Degrees=>{2,1,1})
-      R = QQ
-      A = R G
-      f=2*e*e*f*g+e*f*g+f*g
-      leadTermCoeff(f)
-///
-
-
-doc ///
-  Key
-    (leadTermCoeff,PAVector)
-  Headline
-    Find the coefficient of the lead term of a PAVector.
-  Usage
-    L = leadTermCoeff(f)
-  Inputs
-    f:PAVector
-  Outputs
-    L:RingElement
-  Description
-    Text
-      This function finds the coefficient of the lead term of a PAVector.
-
-    Example
-      M = matrix {{1,0},{1,1}}
-      G = paGraph({v,w},{e,f,g},M,Weights=>{2,1,1},Degrees=>{2,1,1})
-      R = QQ
-      A = R G
-      B = A^5
-      e0 = B_0
-      L = 5*e0*e*f*g+4*e0*e*f+3*e0*f*g
-      leadTermCoeff(L)
-///	      
-*-	      
+	      
 	      
 doc ///
   Key
