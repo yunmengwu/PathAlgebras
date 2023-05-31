@@ -1644,6 +1644,7 @@ doc ///
              2*b*c + 3*c*b + 5*a^2,
              2*c*a + 3*a*c + 5*b^2}
 	 S = R/I
+	 
 ///
 
 
@@ -2500,7 +2501,7 @@ doc ///
         d=a+b+c
 	lp=leadPair(d)
 ///
--*
+
 doc ///
    Key
       isVertex
@@ -2521,11 +2522,11 @@ doc ///
 	G = paGraph({v,w},{e,f,g},adj)
 	a=paPath(G,{0})
 	isVertex(a)
-	b=paPath(G,{})
+	b=paPath(G,0)
 	isVertex(b)
 
 ///
-*-
+
 doc ///
    Key
       (isVertex, PAElement)
@@ -2684,13 +2685,13 @@ doc ///
 
 ///
 
--*
+
 
 doc ///
    Key
       (putInPathAlgebra,PathAlgebra,List)
    Headline
-      Create a list of Path Algebra
+      Create a an Path Algebra
    Usage
       M = putInPathAlgebra(A,L)
    Inputs
@@ -2700,21 +2701,15 @@ doc ///
       M : List 
    Description
       Text
-         This command put a list of PAVector into a list of PathAlgebra.
+         This command put a list of edge numbers into a PathAlgebra.
       Example
-     	 adj = matrix {{3}}
-	 G = paGraph({v},{x,y,z},adj)
+     	 adj = matrix {{4}}
+	 G = paGraph({v},{s,y,z,g},adj)
 	 R = QQ
 	 A = R G
-	 F0 = A^1
-	 e0 = F0_0
-	 f = e0*x*y*z
-	 g = e0*x*y*y
-	 h = e0*y*z
-	 L = {f,g,h}
-	 putInPathAlgebra(A,L)	
+	 putInPathAlgebra(A,{0,1,2,1,3,1})	
 ///
-*-
+
 doc ///
    Key
       (putInPathAlgebra,PathAlgebra,PAPath,RingElement)
@@ -3146,7 +3141,7 @@ doc ///
         "TO DO"	
 ///
 
--*
+
 doc ///
    Key
       divAlgorithm
@@ -3173,13 +3168,17 @@ doc ///
 	f = x*y - y*x
 	g = y*z - z*y
 	h = x*z - z*x
-	divAlgorithm({f,g},L)
-	divAlgorithm({g,f},L)
-	divAlgorithm({f,g,h},L)
-	divAlgorithm({g,h,f},L)
+	r1 = divAlgorithm({f,g},L)
+	peek r1
+       	r2 = divAlgorithm({g,f},L)
+	peek r2
+	r3 = divAlgorithm({f,g,h},L)
+	peek r3
+	r4 = divAlgorithm({g,h,f},L)
+	peek r4
 	
 ///
-*-
+
 doc ///
    Key
       numEdges

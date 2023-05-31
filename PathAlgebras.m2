@@ -424,9 +424,6 @@ overlaps (PAElement,PAElement) := (p,q) -> (
     return merge(lol,rol,first);   
 );
 
-
--- go over divAlgorithm again
-
 divAlgorithm = method ()
 divAlgorithm (List,PAElement) := (D,y) -> (
 -- D should be a list of PAPaths
@@ -3172,6 +3169,7 @@ load "/Users/y.w./github/Pathalgebras/PathAlgebrasDoc.m2"
 end
 
 
+
 restart
 uninstallPackage "PathAlgebras"
 restart
@@ -3234,9 +3232,6 @@ I = paIdeal {2*a*b + 3*b*a + 5*c^2,
              2*c*a + 3*a*c + 5*b^2}
 S = R/I
 
-a^2
-a*b
-a^10
 
 I = I / makeMonic // sort
 interreduce I
@@ -5124,9 +5119,10 @@ RBT = apply(6, i -> getReducedBT(GAMS1,i))
 netList RBT
 
 restart
+debug needsPackage "PathAlgebras"
       	M = matrix {{3}}
 	G = paGraph({v},{a,b,c},M,Weights => {1,1,1})
 	R = QQ
 	A = R G
-	I = {a*a*c*c*a*c*c-a*b*c*b,c*c*a*c*c*b-a}
-	overlaps(I#0,I#1)
+	putInPathAlgebra(A,{1,2,1})
+paPath(G,0)
