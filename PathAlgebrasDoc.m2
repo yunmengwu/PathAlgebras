@@ -2250,7 +2250,7 @@ doc ///
 	peek ov
 ///
 
--*
+
 doc ///
    Key
      overlaps
@@ -2269,23 +2269,15 @@ doc ///
       Text 
        This function takes two PAElements and find all of their overlap relations. 
       Example
-        M = matrix {{3}}
-	G = paGraph({v},{a,b,c},M,Weights=>{1,1,1})
-	kk = ZZ/32003
-	R = kk G
-	I = paIdeal {2*a*b + 3*b*a + 5*c^2,2*b*c + 3*c*b + 5*a^2,2*c*a + 3*a*c + 5*b^2}
-	ov = overlaps((I.generators)#1,(I.generators)#2)
-	peek ov
-      Example
       	M = matrix {{3}}
 	G = paGraph({v},{a,b,c},M)
 	R = QQ
 	A = R G
 	I = {a*a*c*c*a*c*c-a*b*c*b,c*c*a*c*c*b-a}
-	overlaps(I#0,I#1)
-
+	ov = overlaps(I#0,I#1)
+	peek ov
 ///
-*-
+
 doc ///
    Key
      (overlaps,PAVector,PAElement,ZZ)

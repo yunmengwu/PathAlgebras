@@ -3548,7 +3548,6 @@ f1*z - f2*y + f3*x
 f_2(\hat{e_1}) = d_1'*z - d_2'*y + d_3'*x
 (d_i' |-> f's)
 
- --JW
 restart
 debug needsPackage "PathAlgebras"
 adj = matrix {{3}}
@@ -5123,3 +5122,11 @@ I = { -a_1*a_3 + a_2*a_4, a_4*a_6*a_8*a_2, a_4*a_5*a_7*a_1, a_3*a_6*a_8*a_2, a_3
 GAMS1 = getGammaHash({a_3},I,DegreeLimit => 15)
 RBT = apply(6, i -> getReducedBT(GAMS1,i))
 netList RBT
+
+restart
+      	M = matrix {{3}}
+	G = paGraph({v},{a,b,c},M,Weights => {1,1,1})
+	R = QQ
+	A = R G
+	I = {a*a*c*c*a*c*c-a*b*c*b,c*c*a*c*c*b-a}
+	overlaps(I#0,I#1)
