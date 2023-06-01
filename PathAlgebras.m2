@@ -624,7 +624,7 @@ paPath (PAGraph, List) := (G, edgeList') -> (
                     symbol edgeList => edgeList',
 		    symbol degree => getDegree(G.degrees, edgeList'),
 		    symbol weight => getWeight(G.weights,edgeList'),
-                    symbol graph => G }
+                          "graph" => G }
 )
 
 paPath (PAGraph, ZZ) := (G, p) -> (
@@ -633,7 +633,7 @@ paPath (PAGraph, ZZ) := (G, p) -> (
                     symbol edgeList => {},
 		    symbol degree => 0,
 		    symbol weight => 0,
-                    symbol graph => G }
+                          "graph" => G }
 )
 
 length PAPath := p -> #(p.edgeList)
@@ -973,26 +973,26 @@ net PAPath := p -> (
       if e === tempVar then curDegree = curDegree + 1
       else (
         if hasDupe then (
-          nosubscriptNet := net getUnsubVar p.graph.edgeLabels#tempVar;
+          nosubscriptNet := net getUnsubVar p#"graph".edgeLabels#tempVar;
           emptySpace := horizontalJoin (width nosubscriptNet : " ");
 	  powerNet := emptySpace | (if curDegree == 1 then net "" else (net curDegree));
-	  myNet = myNet | stack( powerNet, net p.graph.edgeLabels#tempVar);
+	  myNet = myNet | stack( powerNet, net p#"graph".edgeLabels#tempVar);
 	)
         else
-	  myNet = myNet | net p.graph.edgeLabels#tempVar;
+	  myNet = myNet | net p#"graph".edgeLabels#tempVar;
 	tempVar = e;
         curDegree = 1;
       );
    );
    if hasDupe then (
-     nosubscriptNet := net getUnsubVar p.graph.edgeLabels#tempVar;
+     nosubscriptNet := net getUnsubVar p#"graph".edgeLabels#tempVar;
      emptySpace := horizontalJoin (width nosubscriptNet : " ");
      powerNet := emptySpace | (if curDegree == 1 then net "" else (net curDegree));
-     myNet = myNet | stack( powerNet, net p.graph.edgeLabels#tempVar);
+     myNet = myNet | stack( powerNet, net p#"graph".edgeLabels#tempVar);
      myNet^1
    )
    else (
-     myNet = myNet | net p.graph.edgeLabels#tempVar;
+     myNet = myNet | net p#"graph".edgeLabels#tempVar;
      myNet
    )
 )
@@ -1563,7 +1563,7 @@ toString PAElement := f -> (
 
 toString PAPath := f -> (
     edgeList := f.edgeList;
-    if edgeList == {} then return toString f.graph.vertexLabels#(f.vertex);
+    if edgeList == {} then return toString f#"graph".vertexLabels#(f.vertex);
     myNet := "";
     tempVar := first edgeList;
     curDegree := 0;
@@ -1571,12 +1571,12 @@ toString PAPath := f -> (
     for v in edgeList do(
         if v == tempVar then curDegree = curDegree + 1
 	else (
-	    myNet = myNet | (toString (f.graph.edgeLabels)#tempVar) | if curDegree == 1 then "*" else "^" | curDegree | "*";
+	    myNet = myNet | (toString (f#"graph".edgeLabels)#tempVar) | if curDegree == 1 then "*" else "^" | curDegree | "*";
             tempVar = v;
 	    curDegree = 1;
 	);
     );
-    myNet | (toString (f.graph.edgeLabels)#(last edgeList)) | if curDegree == 1 then "" else "^" | curDegree
+    myNet | (toString (f#"graph".edgeLabels)#(last edgeList)) | if curDegree == 1 then "" else "^" | curDegree
    
 ) 
       
