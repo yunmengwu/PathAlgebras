@@ -652,18 +652,18 @@ removeZeropath (List) := L->(
 
 -- only implementing left-lex order for now
 
-PAPath ? PAPath := (p,q) -> p.graph.compareTerms(p,q)
+PAPath ? PAPath := (p,q) -> p#"graph".compareTerms(p,q)
 
 endVertex = method()
 endVertex PAPath := p -> (
    if p.edgeList == {} then return p.vertex;
-   last (p.graph).edgeHash#(last p.edgeList)
+   last (p#"graph").edgeHash#(last p.edgeList)
 )
 
 startVertex = method()
 startVertex PAPath := p -> (
     if p.edgeList == {} then return p.vertex;
-    first (p.graph).edgeHash#(first p.edgeList)
+    first (p#"graph").edgeHash#(first p.edgeList)
 )
 
 areComposable = method()
@@ -687,7 +687,7 @@ composePath = method()
 composePath (PAPath, PAPath) := (p,q) -> (
    -- this function assumes p and q are composable paths
    -- and produces the composition of p and q.
-   G := p.graph;
+   G := p#"graph";
    if not areComposable(G,p,q) then continue else (
       if length p > 0 and length q > 0 then (
   	  new PAPath from { symbol vertex => null,
@@ -770,7 +770,7 @@ leadMonomial PAElement := f -> (
 )
 
 PAElement == PAElement := (f,g) -> (
-  if (f.graph =!= g.graph) then return false;
+  if (f#"graph" =!= g#"graph") then return false;
   fTerms := pathTerms f;
   gTerms := pathTerms g;
   if #fTerms != #gTerms then return false;
@@ -829,8 +829,8 @@ new PathAlgebra from List := (PathAlgebra, inits) -> new PathAlgebra of PAElemen
 putInPathAlgebra = method()
 putInPathAlgebra (PathAlgebraQuotient, PAPath) :=
 putInPathAlgebra (PathAlgebra, PAPath) := (A,p) -> (
-    if p.graph === A.graph then
-       new A from hashTable {(symbol graph, p.graph),
+    if p#"graph" === A#"graph" then
+       new A from hashTable {(symbol graph, p#"graph"),
                              (symbol ring, A),
                              (symbol terms, hashTable { p => 1_(A.CoefficientRing) }),
 			     (symbol cache, new CacheTable from {})}   
@@ -842,8 +842,8 @@ putInPathAlgebra (PathAlgebraQuotient, PAPath, RingElement) :=
 putInPathAlgebra (PathAlgebra, PAPath, ZZ) := 
 putInPathAlgebra (PathAlgebra, PAPath, QQ) := 
 putInPathAlgebra (PathAlgebra, PAPath, RingElement) := (A,p,c) -> (
-    if p.graph === A.graph and ring c === A.CoefficientRing then
-       new A from hashTable {(symbol graph, p.graph),
+    if p#"graph" === A#"graph" and ring c === A.CoefficientRing then
+       new A from hashTable {( "graph", p#"graph"),
                              (symbol ring, A),
                              (symbol terms, hashTable { p => c }),
 			     (symbol cache, new CacheTable from {})}   
@@ -880,7 +880,7 @@ Ring PAGraph := (R, G) -> (
    
    A + A := (f,g) -> (
       newHash := merge(f.terms,g.terms,addVals);
-      new A from hashTable {(symbol graph, f.graph),
+      new A from hashTable {("graph", f#"graph"),
 	                    (symbol ring, A),
                             (symbol terms, newHash),
 			    (symbol cache, new CacheTable from {})}   
@@ -889,7 +889,7 @@ Ring PAGraph := (R, G) -> (
 
    ZZ * A :=
    QQ * A :=
-   R * A := (r,f) -> new A from hashTable {(symbol graph, f.graph),
+   R * A := (r,f) -> new A from hashTable {("graph", f#"graph"),
                                            (symbol ring, A),
                                            (symbol terms, removeZeroes applyValues(f.terms, c -> r*c)),
 					   (symbol cache, new CacheTable from {})};
@@ -913,7 +913,7 @@ Ring PAGraph := (R, G) -> (
 
    A * A := (f,g) -> (
       newHash := combine(f.terms,g.terms,composePath,times,addVals);
-      new A from hashTable {(symbol graph, f.graph),
+      new A from hashTable {("graph", f#"graph"),
 	                    (symbol ring, A),
 	                    (symbol terms, newHash),
 			    (symbol cache, new CacheTable from {})}
@@ -924,7 +924,7 @@ Ring PAGraph := (R, G) -> (
    
    A ^ ZZ := (f,n) -> product toList (n:f);
    
-   - A := f -> new A from hashTable {(symbol graph, f.graph),
+   - A := f -> new A from hashTable {( "graph", f#"graph"),
 	                             (symbol ring, A),
 	                             (symbol terms, applyValues(f.terms, c -> -c)),
 			             (symbol cache, new CacheTable from {})};
@@ -937,12 +937,12 @@ ideal PathAlgebra := A -> paIdeal {0_A}
 numVertices = method()
 numVertices PAGraph := G -> #(G.vertexLabels)
 numVertices PathAlgebraQuotient := 
-numVertices PathAlgebra := A -> numVertices A.graph
+numVertices PathAlgebra := A -> numVertices A#"graph"
 
 numEdges = method()
 numEdges PAGraph := G -> #(G.edgeLabels)
 numEdges PathAlgebraQuotient := 
-numEdges PathAlgebra := A -> numEdges A.graph
+numEdges PathAlgebra := A -> numEdges A#"graph"
 
 hasDuplicate = method()
 hasDuplicate List := L -> (
@@ -962,7 +962,7 @@ net PAPath := p -> (
    edgeList := p.edgeList;
    
    -- single vertex case
-   if edgeList === {} then return net p.graph.vertexLabels#(p.vertex);
+   if edgeList === {} then return net p#"graph".vertexLabels#(p.vertex);
 
    -- path case
    myNet := net "";
@@ -1130,7 +1130,7 @@ paHilbertSeries = method(Options => options paBasis)
 paHilbertSeries (ZZ,PathAlgebra,List) := opts -> (n, R, M) -> (
    if not (opts#Strategy == "Degree" or opts#Strategy == "Length") then error "Expected Degree or Length Strategy.";
    d := #R.vertexGens;
-   G := R.graph;
+   G := R#"graph";
    A := degreesRing 1;
    F := A^d;
    sum for i from 0 to n list (
@@ -1205,14 +1205,14 @@ PathAlgebra / PAIdeal := (A, I) -> (
 				      (symbol edgeGens) => {},
        			     	      (symbol CoefficientRing) => A.CoefficientRing,
   			     	      (symbol ambient) => A,
-                             	      (symbol graph) => A.graph,
+                             	      ("graph") => A#"graph",
 				      (symbol cache) => new CacheTable from {},
           		     	      (symbol baseRings) => {ZZ},    -- this will be for quotients of quotients
 				      (symbol unit) => null,
 				      (symbol ideal) => I};
    
    
-   G := B.graph;
+   G := B#"graph";
    vertexLabels := G.vertexLabels / baseName;
    vertexGens := apply(#vertexLabels, i -> putInPathAlgebra(B,paPath(G,i)));
    B.vertexGens = apply(#vertexLabels, i -> (vertexLabels#i) <- vertexGens#i);
@@ -1228,19 +1228,19 @@ PathAlgebra / PAIdeal := (A, I) -> (
    -- function to reduce the result and place it in the quotient ring.
    push := f -> (
       temp := f % Igb;
-      new B from {(symbol graph, B.graph),
+      new B from {("graph", B#"graph"),
 	          (symbol ring) => B,
                   (symbol cache) => new CacheTable from {},
                   (symbol terms) => temp.terms}
    );
    
    --- all these promotes will need to be written between this ring and all base rings.
-   promote (A,B) := (f,B) -> new B from {(symbol graph, B.graph),
+   promote (A,B) := (f,B) -> new B from {("graph", B#"graph"),
                                          (symbol ring) => B,
                                          (symbol cache) => new CacheTable from {},
                                          (symbol terms) => f.terms};
                                      
-   promote (B,A) := (f,A) -> new A from {(symbol graph, B.graph),
+   promote (B,A) := (f,A) -> new A from {("graph", B#"graph"),
                                          (symbol ring) => A,
                                          (symbol cache) => new CacheTable from {},
                                          (symbol terms) => f.terms};
@@ -1284,8 +1284,8 @@ PathAlgebra / PAIdeal := (A, I) -> (
 
 use PathAlgebraQuotient :=
 use PathAlgebra := A -> (
-   scan(A.graph.vertexLabels, A.vertexGens, (sym,val) -> sym <- val);
-   scan(A.graph.edgeLabels, A.edgeGens, (sym,val) -> sym <- val);
+   scan(A#"graph".vertexLabels, A.vertexGens, (sym,val) -> sym <- val);
+   scan(A#"graph".edgeLabels, A.edgeGens, (sym,val) -> sym <- val);
    A
 )
 
@@ -1657,25 +1657,25 @@ length PAModMon := f-> length f.path
 -- asssuming f is a submodmon of g
 -- return a paPath
 findOverlaps(PAModMon,PAModMon) := (f,g) -> (
-    if length f == length g then return paPath(f.path.graph,0)
-    else return paPath(f.path.graph,drop(g.path.edgeList,length f))
+    if length f == length g then return paPath(f.path#"graph",0)
+    else return paPath(f.path#"graph",drop(g.path.edgeList,length f))
 )
 
 findOverlaps(PAModMon,PAElement) := (f,g) -> findOverlaps(f,leadPath g)
 findOverlaps(PAModMon,PAPath) := (f,g) -> (
-    if length f == length g then return paPath(f.path.graph,0)
-    else return paPath(f.path.graph,drop(g.edgeList,length f))
+    if length f == length g then return paPath(f.path#"graph",0)
+    else return paPath(f.path#"graph",drop(g.edgeList,length f))
 )
 
 findOverlaps(PAElement,PAModMon) := (f,g) -> (
     fpath := leadPath f;
-    if length fpath == length g then return paPath(fpath.graph,0)
-    else return paPath(fpath.graph,drop(g.path.edgeList, - (length f)))
+    if length fpath == length g then return paPath(fpath#"graph",0)
+    else return paPath(fpath#"graph",drop(g.path.edgeList, - (length f)))
 )
 
 findOverlaps(PAPath,PAModMon) := (f,g) -> (
-    if length f == length g then return paPath(f.graph,0)
-    else return paPath(f.graph,drop(g.path.edgeList,length f))
+    if length f == length g then return paPath(f#"graph",0)
+    else return paPath(f#"graph",drop(g.path.edgeList,length f))
 )
 --findOverlaps(PAModMon,PAElement) := (f,g) -> putInPathAlgebra(g.ring,findOverlaps(f,leadPath g))
 
@@ -1795,7 +1795,7 @@ PAVector ? PAVector := (f,g) -> (class f).compareTerms(f,g)
 stdBasisVector = method()
 stdBasisVector (PAModule,ZZ) := (M,n) -> (
     A := M.ring;
-    G := A.graph;
+    G := A#"graph";
     R := A.CoefficientRing;
     m := numVertices G;
     paVector(M,toList(m:1_R),apply(m, i -> paModMon(M,n,paPath(G,i))))
@@ -1850,7 +1850,7 @@ putInPathAlgebra(PathAlgebra,PAVector):= (A,f) -> (
     if keys f.terms == {} then return 0_A
     else sum for p in pairs f.terms list (last p)*putInPathAlgebra(A,(first p).path)
 )
-putInPathAlgebra(PathAlgebra,List) := (A,L) ->  putInPathAlgebra(A,paPath(A.graph,L))
+putInPathAlgebra(PathAlgebra,List) := (A,L) ->  putInPathAlgebra(A,paPath(A#"graph",L))
 
 putAllInPathAlgebra = method()
 putAllInPathAlgebra(PathAlgebra,List) := (A,L)-> for p in L list putInPathAlgebra(A,p)
@@ -4731,7 +4731,7 @@ GAM1 = getDegreeGammaHash(GAM)
 tempHash = partition (m -> (m_0, m_1), sort flatten apply(pairs GAM.terms, p -> apply(last p, q -> (length q, first p, q))))
 applyValues(tempHash, p -> apply(p, last))
 
-del(GAM.terms#2#7,GAM) -- can we cancel these terms? -- Done
+del(GAM.terms#2#7,GAM)
 del(GAM.terms#3#0,GAM)
 del(GAM.terms#3#1,GAM)
 del(GAM.terms#3#2,GAM)
