@@ -84,12 +84,9 @@ export { "PAPath","paPath", -- not exporting paPath constructor
 	 "startVertex",
 	 "stdBasisVector",
 	 "toRationalFunction",
-	 "toUniform"
-
-	 
+	 "toUniform"	 
 	  }
   
-protect graph
 protect vertexLabels
 protect vertex
 protect vertexGens
@@ -207,7 +204,7 @@ rightWeightReverseLexCompare(List,PAPath,PAPath) := (w,p,q) -> (
 );
 
 PAPath == PAPath := (p,q) -> (
-   if p.graph =!= q.graph then return false;
+   if p#"graph" =!= q#"graph" then return false;
    if p.weight != q.weight then return false;
    if p.weight == 0 then return p.vertex == q.vertex
    else return p.edgeList == q.edgeList;
@@ -694,7 +691,7 @@ composePath (PAPath, PAPath) := (p,q) -> (
 	                    symbol edgeList => p.edgeList | q.edgeList,
 			    symbol degree => p.degree + q.degree,
 			    symbol weight => p.weight + q.weight,
-                            symbol graph => G }
+                            "graph" => G }
       )
       else if length p > 0 then p
       else q
@@ -830,7 +827,7 @@ putInPathAlgebra = method()
 putInPathAlgebra (PathAlgebraQuotient, PAPath) :=
 putInPathAlgebra (PathAlgebra, PAPath) := (A,p) -> (
     if p#"graph" === A#"graph" then
-       new A from hashTable {(symbol graph, p#"graph"),
+       new A from hashTable {("graph", p#"graph"),
                              (symbol ring, A),
                              (symbol terms, hashTable { p => 1_(A.CoefficientRing) }),
 			     (symbol cache, new CacheTable from {})}   
@@ -857,7 +854,7 @@ addVals := (c,d) -> (
 );
 
 Ring PAGraph := (R, G) -> (
-   A := new PathAlgebra from {(symbol graph) => G,
+   A := new PathAlgebra from {("graph") => G,
            (symbol generators) => {},
        	   (symbol degreesRing) => degreesRing 1,
            (symbol edgeGens) => {},
@@ -2520,14 +2517,14 @@ GTN = new Type of HashTable
 gtn = method()
 gtn (GTN, PAElement) := (L, w) -> (
     new GTN from { (symbol left) => L,
-	           (symbol word) => L.word * w,
+	                  "word" => L#"word" * w,
 		   (symbol gamma) => L.gamma + 1,
 		   (symbol right) => w }
 )
 gtn PAElement := v -> (
     if not isVertex v then error "Expected a vertex.";
     new GTN from { (symbol left) => null,
-	           (symbol word) => v,
+	                  "word" => v,
 		   (symbol gamma) => 0,
 		   (symbol right) => null }
 )
@@ -2535,9 +2532,9 @@ gtn PAElement := v -> (
 --need to change networker here: v*g=g does not make sense in 2 vertex case.
 isVertex GTN := g -> g.left === null
 netWorker = g -> if isVertex g then net "" else netWorker(g.left) | (if g.gamma != 1 then net "." else net "") | (net g.right)
-net GTN := g -> if isVertex g then (net g.word) else netWorker(g)
+net GTN := g -> if isVertex g then (net g#"word") else netWorker(g)
 
-GTN ? GTN := (g,h) -> g.word ? h.word
+GTN ? GTN := (g,h) -> g#"word" ? h#"word"
 -*
 GTN ? GTN := (g,h) -> (
     if length g != length h then return (length g) ? (length h);
@@ -2550,7 +2547,7 @@ GTN ? GTN := (g,h) -> (
 *-
 GTN * PAElement := (L,g) -> (
     new GTN from { (symbol left) => L.left,
-	           (symbol word) => (L.word) * g,
+	                  "word" => (L#"word") * g,
 		   (symbol gamma) => L.gamma,
 		   (symbol right) => (L.right) * g }
 )
@@ -2578,7 +2575,7 @@ checkTip(PAElement,List):=(f,L) ->(
 
 gammaOverlap(GTN,PAElement):= (p,q) -> (
     A    := q.ring;
-    lelp := leadEdgeList(p#word);
+    lelp := leadEdgeList(p#"word");
     lelq := leadEdgeList(q);
     R    := findOverlaps(lelp,lelq);
     result := for i from 0 to length R - 1 list (bel  := take(lelq,-(length q - R#i)));
@@ -2587,13 +2584,13 @@ gammaOverlap(GTN,PAElement):= (p,q) -> (
 
 )
 
-gammaOverlap(GTN,GTN):= (p,q) -> gammaOverlap(p,q.word)
+gammaOverlap(GTN,GTN):= (p,q) -> gammaOverlap(p,q#"word")
 
 --overlap between a gtn and the list of defining equations
 gammaOverlap(GTN,List):= (p,L) -> (
     if L == {} then error "need a non-empty list.";
     A := (first L).ring;
-    lelp := leadEdgeList(p#word);
+    lelp := leadEdgeList(p#"word");
     ovlp := {};
     for q in L do (
 	lelq := leadEdgeList(q);
@@ -2631,7 +2628,7 @@ getGammas(List,List) := opts -> (G,I) -> (
     --G1 := flatten apply(G,m -> gtn(G0#(startVertex m),m));  
   
     G2 := flatten for i from 0 to #G1-1 list(
-	         flatten for j from 0 to #I -1 list (if isPrefix(G1#i,I#j) then  gtn(G1#i,putInPathAlgebra(A,drop(leadEdgeList I#j,length(G1#i.word)))) )
+	         flatten for j from 0 to #I -1 list (if isPrefix(G1#i,I#j) then  gtn(G1#i,putInPathAlgebra(A,drop(leadEdgeList I#j,length(G1#i#"word")))) )
     );
     G2 = delete(null,G2);
     G2 = select(G2, m -> length m <= opts#DegreeLimit);
@@ -2713,8 +2710,8 @@ getGammas1(List,List,ZZ) := opts -> (G,I,n) -> (
 *-	
 
 isPrefix(PAElement,PAElement) := (f,g) -> isPrefix(leadEdgeList f,leadEdgeList g)
-isPrefix(GTN,PAElement) := (f,g) -> isPrefix(f.word,g)
-isPrefix(GTN,GTN) := (f,g) ->  f.left === g.left and isPrefix(f.word,g.word)
+isPrefix(GTN,PAElement) := (f,g) -> isPrefix(f#"word",g)
+isPrefix(GTN,GTN) := (f,g) ->  f.left === g.left and isPrefix(f#"word",g#"word")
 
 
 factorGTN = method()
@@ -2822,7 +2819,7 @@ del(GTN,GAMMA) :=  opts -> (f,G) -> (
 
     while toDo != {} do (
 	--error "err6";
-	toDo = sortAccordingTo(sepTensorPairs(toDo), f -> (f#0).word * leadMonomial (f#1));
+	toDo = sortAccordingTo(sepTensorPairs(toDo), f -> ((f#0)#"word")* leadMonomial (f#1));
 	if toDo == {} then break;
 	--if n == 5 then error "err2";
 	next := last toDo;
@@ -2859,7 +2856,7 @@ del(GTN,GAMMA) :=  opts -> (f,G) -> (
     );
     results = results | apply(newResults, m-> (first m,(-1)*(last m)));
     --results = sort ringInterReduce(results,I);
-    results = sortAccordingTo(ringInterReduce(results,I), f -> (f#0).word * leadMonomial (f#1));
+    results = sortAccordingTo(ringInterReduce(results,I), f -> (f#0#"word") * leadMonomial (f#1));
     G.delResults#f = results;
     return (true,results)
 )
@@ -3024,7 +3021,7 @@ bettiTally(GAMMA, ZZ) := (G,endVert) -> (
     new BettiTally from  apply(pairs G.degreeTerms,m-> (last first m,{first first m},first first  m) => #(selectEndVertex(last m,endVert)))
 )
 
-endVertex GTN := f -> endVertex f.word
+endVertex GTN := f -> endVertex f#"word"
 
 selectEndVertex = method()
 selectEndVertex(List,ZZ) := (L,n) -> select(L,m-> (endVertex m) == n)
@@ -3092,7 +3089,7 @@ findGAMMABases = method()
 findGAMMABases (GTN,GAMMA) := (g,GAM) -> (
     gtnLength := length g;
     n := g.gamma;
-    A := g.word.ring;
+    A := g#"word".ring;
     --gtn in n-1 chain that have length leq g
     gtnOptions := apply(select(GAM.terms#(n-1), m -> length m <= gtnLength), m->(m,length m));
     lengthList := sort unique apply(gtnOptions,m-> last m);
@@ -3103,17 +3100,17 @@ findGAMMABases (GTN,GAMMA) := (g,GAM) -> (
     );
     pathPairs = pathPairs | {(0,A.vertexGens)};
     allPaths := new HashTable from pathPairs;
-    results := apply(GAM.terms#(n-1),m->(m, select(allPaths#(gtnLength -length m),l->(m*l).word != 0_A)));
+    results := apply(GAM.terms#(n-1),m->(m, select(allPaths#(gtnLength -length m),l->(m*l)#"word" != 0_A)));
     return results
 )
 
 --n chain with m length with endvertex v
 getReduceTerms = method()
-getReduceTerms(GAMMA,ZZ,ZZ,ZZ) := (G,v,n,m) -> select(G.terms#n, l -> length l == m and endVertex(l.word) == v)
+getReduceTerms(GAMMA,ZZ,ZZ,ZZ) := (G,v,n,m) -> select(G.terms#n, l -> length l == m and endVertex(l#"word") == v)
     
 getReduceMatrix = method()
 getReduceMatrix(GAMMA,List) := (G,L) -> (
-    A := (first L).word.ring;
+    A := (first L)#"word".ring;
     n := (first L).gamma;
     return transpose matrix apply(L, l -> (
     --return transpose paMatrix apply(L, l -> (
@@ -4906,11 +4903,11 @@ B2 = new BettiTally from { (0,{0},0) => {1,0} }
 
 GAMS1Deg = getDegreeGammaHash(GAMS1)
 
-tal = tally apply(GAMS1Deg.degreeTerms#(3,2), g -> endVertex(g.word))
+tal = tally apply(GAMS1Deg.degreeTerms#(3,2), g -> endVertex(g#"word"))
 tal#4
 
 endVertexCount = (gtns,A) -> (
-    tal := tally apply(gtns, g -> endVertex(g.word));
+    tal := tally apply(gtns, g -> endVertex(g#"word"));
     apply(numVertices A, i -> if not tal#?i then 0 else tal#i)
 )
 debug Core
@@ -5104,7 +5101,7 @@ overlaps(I#0,I#1)
 --S_1 projective resolution
 restart
 debug needsPackage "PathAlgebras"
-adj = matrix {{0,0,0,0,1,1},
+adj = transpose matrix {{0,0,0,0,1,1},
               {1,0,0,0,0,0},
 	      {1,0,0,0,0,0},
 	      {0,1,1,0,0,0},
