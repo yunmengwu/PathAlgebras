@@ -837,7 +837,7 @@ Ring PAGraph := (R, G) -> (
            (symbol generators) => {},
        	   (symbol degreesRing) => degreesRing 1,
            "edgeGens" => {},
-	   (symbol vertexGens) => {},
+	   "vertexGens" => {},
 	   (symbol CoefficientRing) => R,
 	   (symbol cache) => new CacheTable from {},
 	   (symbol baseRings) => {ZZ},
@@ -846,13 +846,13 @@ Ring PAGraph := (R, G) -> (
 
    vertexLabels := G#"vertexLabels" / baseName;
    vertexGens := apply(#vertexLabels, i -> putInPathAlgebra(A,paPath(G,i)));
-   A.vertexGens = apply(#vertexLabels, i -> (vertexLabels#i) <- vertexGens#i);
+   A#"vertexGens" = apply(#vertexLabels, i -> (vertexLabels#i) <- vertexGens#i);
 
    edgeLabels := G#"edgeLabels" / baseName;
    edgeGens := apply(#edgeLabels, i -> putInPathAlgebra(A,paPath(G,{i})));
    A#"edgeGens" = apply(#edgeLabels, i -> (edgeLabels#i) <- edgeGens#i);
 
-   A.generators = A.vertexGens | A#"edgeGens";
+   A.generators = A#"vertexGens" | A#"edgeGens";
    
    A + A := (f,g) -> (
       newHash := merge(f.terms,g.terms,addVals);
@@ -861,7 +861,7 @@ Ring PAGraph := (R, G) -> (
                             (symbol terms, newHash),
 			    (symbol cache, new CacheTable from {})}   
    );
-   A#"unit" = sum A.vertexGens;
+   A#"unit" = sum A#"vertexGens";
 
    ZZ * A :=
    QQ * A :=
@@ -1068,7 +1068,7 @@ paBasisLength(ZZ,PathAlgebra,List) := (n,R,M) -> (
    G := R#"edgeGens";
    g := #G;
    local myBasis;
-   if n == 0 then myBasis = R.vertexGens
+   if n == 0 then myBasis = R#"vertexGens"
    else if n == 1 then myBasis = select(G, f -> all(M, m -> not isSubpathOnly(m,f)))
    else (
       prevBasis := paBasisLength(n-1,R);
@@ -1090,7 +1090,7 @@ paBasisDegree(ZZ,PathAlgebra,List) := (n,R,M) -> (
    G := R#"edgeGens";
    g := #G;
    local myBasis;
-   if n == 0 then myBasis = R.vertexGens
+   if n == 0 then myBasis = R#"vertexGens"
    else if n == 1 then myBasis = select(G, f -> pathDegree(f) == 1 and all(M, m -> not isSubpathOnly(m,f)))
    else (
       tempList := flatten for g in G list if pathDegree(g) < n then apply(paBasisDegree(n-pathDegree(g),R,M), m -> g*m)
@@ -1105,7 +1105,7 @@ paBasisDegree(ZZ,PathAlgebra,List) := (n,R,M) -> (
 paHilbertSeries = method(Options => options paBasis)
 paHilbertSeries (ZZ,PathAlgebra,List) := opts -> (n, R, M) -> (
    if not (opts#Strategy == "Degree" or opts#Strategy == "Length") then error "Expected Degree or Length Strategy.";
-   d := #R.vertexGens;
+   d := #R#"vertexGens";
    G := R#"graph";
    A := degreesRing 1;
    F := A^d;
@@ -1177,7 +1177,7 @@ new PathAlgebraQuotient from List := (PathAlgebraQuotient, inits) -> new PathAlg
 PathAlgebra / PAIdeal := (A, I) -> (
    Igb := buchAlgorithm I;
    B := new PathAlgebraQuotient from {(symbol generators) => {},
-                                      (symbol vertexGens) => {},
+                                      "vertexGens" => {},
 				      "edgeGens" => {},
        			     	      (symbol CoefficientRing) => A.CoefficientRing,
   			     	      (symbol ambient) => A,
@@ -1191,13 +1191,13 @@ PathAlgebra / PAIdeal := (A, I) -> (
    G := B#"graph";
    vertexLabels := G#"vertexLabels" / baseName;
    vertexGens := apply(#vertexLabels, i -> putInPathAlgebra(B,paPath(G,i)));
-   B.vertexGens = apply(#vertexLabels, i -> (vertexLabels#i) <- vertexGens#i);
+   B#"vertexGens" = apply(#vertexLabels, i -> (vertexLabels#i) <- vertexGens#i);
 
    edgeLabels := G#"edgeLabels" / baseName;
    edgeGens := apply(#edgeLabels, i -> putInPathAlgebra(B,paPath(G,{i})));
    B#"edgeGens" = apply(#edgeLabels, i -> (edgeLabels#i) <- edgeGens#i);
 
-   B.generators = B.vertexGens | B#"edgeGens";
+   B.generators = B#"vertexGens" | B#"edgeGens";
 
    R := A.CoefficientRing;
    
@@ -1249,7 +1249,7 @@ PathAlgebra / PAIdeal := (A, I) -> (
    B == R := (f,n) -> (lift f) == n;
    R == B := (n,f) -> f == n;
    
-   B#"unit" = sum B.vertexGens;   
+   B#"unit" = sum B#"vertexGens";   
 
    promote (ZZ,B) := 
    promote (QQ,B) := 
@@ -1260,7 +1260,7 @@ PathAlgebra / PAIdeal := (A, I) -> (
 
 use PathAlgebraQuotient :=
 use PathAlgebra := A -> (
-   scan(A#"graph"#"vertexLabels", A.vertexGens, (sym,val) -> sym <- val);
+   scan(A#"graph"#"vertexLabels", A#"vertexGens", (sym,val) -> sym <- val);
    scan(A#"graph"#"edgeLabels", A#"edgeGens", (sym,val) -> sym <- val);
    A
 )
@@ -2420,12 +2420,12 @@ isWellDefined PAMap := f -> (
 )
 
 startVertexLabel = method()
-startVertexLabel PAElement := f -> (class f).vertexGens#(startVertex leadPath f)
-startVertexLabel PAVector := f -> (class f).ring.vertexGens#(startVertex (leadModMon f).path)
+startVertexLabel PAElement := f -> (class f)#"vertexGens"#(startVertex leadPath f)
+startVertexLabel PAVector := f -> (class f).ring#"vertexGens"#(startVertex (leadModMon f).path)
 
 endVertexLabel = method()
-endVertexLabel PAElement := f -> (class f).vertexGens#(endVertex leadPath f)
-endVertexLabel PAVector := f -> (class f).ring.vertexGens#(endVertex (leadModMon f).path)
+endVertexLabel PAElement := f -> (class f)#"vertexGens"#(endVertex leadPath f)
+endVertexLabel PAVector := f -> (class f).ring#"vertexGens"#(endVertex (leadModMon f).path)
 
 verticesLabels = method()
 verticesLabels PAPath :=
@@ -2470,12 +2470,12 @@ endVertex PAVector := f -> endVertex (leadModMon f).path
 notEndVertex = method()
 notEndVertex(PAVector) := f -> (
     fvertex := endVertex f;
-    return drop((class f).ring.vertexGens,{fvertex,fvertex})
+    return drop((class f).ring#"vertexGens",{fvertex,fvertex})
 )    
 
 notEndVertex(PAElement) := f -> (
     fvertex := endVertex f;
-    return drop((class f).vertexGens,{fvertex,fvertex})
+    return drop((class f)#"vertexGens",{fvertex,fvertex})
 )    
 
 
@@ -2594,7 +2594,7 @@ getGammas(List,List) := opts -> (G,I) -> (
     G0 := {};
     G1 := {};
     for i from 0 to #G - 1 do (
-	g := gtn(A.vertexGens#(startVertex G#i));
+	g := gtn(A#"vertexGens"#(startVertex G#i));
 	h := gtn(g,G#i);
 	G0 = G0|{g};
 	G1 = G1|{h};
@@ -2927,7 +2927,7 @@ prefixOverlap = method()
 prefixOverlap(PAElement,PAElement) := (f,g) -> (
     A := f.ring;
     if not isPrefix(f,g) then return (false,-1);
-    if length f == length g then return (true,((leadCoefficient g)*(leadCoefficient f)^(-1)*A.vertexGens#(endVertex(f))));
+    if length f == length g then return (true,((leadCoefficient g)*(leadCoefficient f)^(-1)*A#"vertexGens"#(endVertex(f))));
     --if isPrefix(f,g) and (length f == length g) then return (true,g);
     return (true,(leadCoefficient g)*(leadCoefficient f)^(-1)*putInPathAlgebra(A,drop(leadEdgeList g,length(f))))
 )
@@ -3040,7 +3040,7 @@ getVertexInfo = method()
 getVertexInfo (List) := L -> apply(L,m->(m,startVertex m,endVertex m))
     
 edgesEndsAt = method()
-edgesEndsAt (PathAlgebra,ZZ) := (A,n) -> edgesEndsAt(A,(A.vertexGens)#n)
+edgesEndsAt (PathAlgebra,ZZ) := (A,n) -> edgesEndsAt(A,(A#"vertexGens")#n)
 edgesEndsAt (PathAlgebra,PAElement) := (A,v) -> select(apply(A#"edgeGens", m-> m*v),n -> n!=0_A)
 
 --v is the vertex we wants to end at
@@ -3062,7 +3062,7 @@ pathsEndsAt (PathAlgebra,List,ZZ) := (A,L,n) -> (
     return L
 )
     
-pathsEndsAt (PathAlgebra,ZZ,ZZ) := (A,m,n) -> pathsEndsAt(A,(A.vertexGens)#m,n)
+pathsEndsAt (PathAlgebra,ZZ,ZZ) := (A,m,n) -> pathsEndsAt(A,(A#"vertexGens")#m,n)
 
 findGAMMABases = method()
 findGAMMABases (GTN,GAMMA) := (g,GAM) -> (
@@ -3077,7 +3077,7 @@ findGAMMABases (GTN,GAMMA) := (g,GAM) -> (
     if #lengthList > 1 then for i from 1 to #lengthList-1 do (
 	pathPairs = pathPairs |{(lengthList#i,pathsEndsAt(A,last last pathPairs,lengthList#i - first last pathPairs))};
     );
-    pathPairs = pathPairs | {(0,A.vertexGens)};
+    pathPairs = pathPairs | {(0,A#"vertexGens")};
     allPaths := new HashTable from pathPairs;
     results := apply(GAM.terms#(n-1),m->(m, select(allPaths#(gtnLength -length m),l->(m*l)#"word" != 0_A)));
     return results
