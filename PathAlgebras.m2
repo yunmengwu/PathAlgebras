@@ -97,24 +97,17 @@ protect edgeGens
 protect edgeList
 protect edgeLabels
 protect weights
-protect unit
 protect compareTerms
 protect edgeMap
 protect vertexMap
 protect compDegree
 protect componentHash
---protect chain
-protect word
-
 protect Mod
 protect modrings
 protect delResults
 protect degreeTerms
 protect ChainLimit
 protect gamma
---protect gtncoeff
---protect newToDo
---protect nextPAE
 
 -- ** update this **
 -- Interface:
@@ -159,7 +152,7 @@ leftLexCompare(PAPath,PAPath) := (p,q) -> (
     -- this is easy since list comparison of integers is automatically lexicographic
     if length p < length q then return symbol <;
     if length p > length q then return symbol >;
-    if length p == length q and length p == 0 then return p.vertex ? q.vertex
+    if length p == length q and length p == 0 then return p#"vertex" ? q#"vertex"
     else return q.edgeList ? p.edgeList;
 );
 
@@ -167,13 +160,13 @@ rightLexCompare = method()
 rightLexCompare(PAPath,PAPath):= (p,q) -> (
     if length p < length q then return symbol <;
     if length p > length q then return symbol >;
-    if length p == length q and length p == 0 then return p.vertex ? q.vertex
+    if length p == length q and length p == 0 then return p#"vertex" ? q#"vertex"
     else return (reverse q.edgeList) ? (reverse p.edgeList);
 )
 
 leftWeightLexCompare = method()
 leftWeightLexCompare(List,PAPath,PAPath) := (w,p,q) -> (
-    if length p == length q and length p == 0 then return p.vertex ? q.vertex;
+    if length p == length q and length p == 0 then return p#"vertex" ? q#"vertex";
     comp := p.weight ? q.weight;
     if comp != (symbol ==) then return comp;
     return leftLexCompare(p,q);
@@ -181,7 +174,7 @@ leftWeightLexCompare(List,PAPath,PAPath) := (w,p,q) -> (
 
 rightWeightLexCompare = method()
 rightWeightLexCompare(List,PAPath,PAPath) := (w,p,q) -> (
-    if length p == length q and length p == 0 then return p.vertex ? q.vertex;
+    if length p == length q and length p == 0 then return p#"vertex" ? q#"vertex";
     comp := p.weight ? q.weight;
     if comp != (symbol ==) then return comp;
     return rightLexCompare(p,q);
@@ -206,7 +199,7 @@ rightWeightReverseLexCompare(List,PAPath,PAPath) := (w,p,q) -> (
 PAPath == PAPath := (p,q) -> (
    if p#"graph" =!= q#"graph" then return false;
    if p.weight != q.weight then return false;
-   if p.weight == 0 then return p.vertex == q.vertex
+   if p.weight == 0 then return p#"vertex" == q#"vertex"
    else return p.edgeList == q.edgeList;
 )
 
@@ -617,7 +610,7 @@ net PAGraph := G -> net G.adjacencyMatrix
 paPath = method()
 paPath (PAGraph, List) := (G, edgeList') -> (
   if edgeList' == {} then error "Expected a nonempty list.";
-  new PAPath from { symbol vertex => null,
+  new PAPath from { "vertex" => null,
                     symbol edgeList => edgeList',
 		    symbol degree => getDegree(G.degrees, edgeList'),
 		    symbol weight => getWeight(G.weights,edgeList'),
@@ -626,7 +619,7 @@ paPath (PAGraph, List) := (G, edgeList') -> (
 
 paPath (PAGraph, ZZ) := (G, p) -> (
   if p > #(G.vertexLabels) or p < 0 then error "Expected an integer in 0..(#G.vertexLabels)";
-  new PAPath from { symbol vertex => p,
+  new PAPath from { "vertex" => p,
                     symbol edgeList => {},
 		    symbol degree => 0,
 		    symbol weight => 0,
@@ -653,13 +646,13 @@ PAPath ? PAPath := (p,q) -> p#"graph".compareTerms(p,q)
 
 endVertex = method()
 endVertex PAPath := p -> (
-   if p.edgeList == {} then return p.vertex;
+   if p.edgeList == {} then return p#"vertex";
    last (p#"graph").edgeHash#(last p.edgeList)
 )
 
 startVertex = method()
 startVertex PAPath := p -> (
-    if p.edgeList == {} then return p.vertex;
+    if p.edgeList == {} then return p#"vertex";
     first (p#"graph").edgeHash#(first p.edgeList)
 )
 
@@ -670,12 +663,11 @@ areComposable (PAGraph, PAPath, PAPath) := (G,p,q) -> (
    if length p > 0 and length q > 0 then 
      endVertex p == startVertex q
    else if length p > 0 then
-     endVertex p == q.vertex
+     endVertex p == q#"vertex"
    else if length q > 0 then 
-     p.vertex == startVertex q
+     p#"vertex" == startVertex q
    else
-     p.vertex == q.vertex
-)
+     p#"vertex" == q#"vertex")
 
 -- this function should only be called in a call to combine
 -- for a hash table for multiplication (in a ring or a module)
@@ -687,7 +679,7 @@ composePath (PAPath, PAPath) := (p,q) -> (
    G := p#"graph";
    if not areComposable(G,p,q) then continue else (
       if length p > 0 and length q > 0 then (
-  	  new PAPath from { symbol vertex => null,
+  	  new PAPath from { "vertex" => null,
 	                    symbol edgeList => p.edgeList | q.edgeList,
 			    symbol degree => p.degree + q.degree,
 			    symbol weight => p.weight + q.weight,
@@ -863,7 +855,7 @@ Ring PAGraph := (R, G) -> (
 	   (symbol cache) => new CacheTable from {},
 	   (symbol baseRings) => {ZZ},
 	   (symbol degreeLength) => 1,
-	   (symbol unit) => null};
+	   "unit" => null};
 
    vertexLabels := G.vertexLabels / baseName;
    vertexGens := apply(#vertexLabels, i -> putInPathAlgebra(A,paPath(G,i)));
@@ -882,7 +874,7 @@ Ring PAGraph := (R, G) -> (
                             (symbol terms, newHash),
 			    (symbol cache, new CacheTable from {})}   
    );
-   A.unit = sum A.vertexGens;
+   A#"unit" = sum A.vertexGens;
 
    ZZ * A :=
    QQ * A :=
@@ -896,11 +888,11 @@ Ring PAGraph := (R, G) -> (
 
    promote (ZZ,A) := 
    promote (QQ,A) := 
-   promote (R,A)  := (r,A) -> r*A.unit;
+   promote (R,A)  := (r,A) -> r*A#"unit";
    
    ZZ + A := 
    QQ + A := 
-   R + A  := (r,f) -> r*A.unit + f;
+   R + A  := (r,f) -> r*A#"unit" + f;
 
    A + ZZ :=
    A + QQ :=
@@ -916,7 +908,7 @@ Ring PAGraph := (R, G) -> (
 			    (symbol cache, new CacheTable from {})}
    );
 
-   A + R := (f,r) -> f + r*A.unit;
+   A + R := (f,r) -> f + r*A#"unit";
    R + A := (r,f) -> f + r;
    
    A ^ ZZ := (f,n) -> product toList (n:f);
@@ -959,7 +951,7 @@ net PAPath := p -> (
    edgeList := p.edgeList;
    
    -- single vertex case
-   if edgeList === {} then return net p#"graph".vertexLabels#(p.vertex);
+   if edgeList === {} then return net p#"graph".vertexLabels#(p#"vertex");
 
    -- path case
    myNet := net "";
@@ -1205,7 +1197,7 @@ PathAlgebra / PAIdeal := (A, I) -> (
                              	      ("graph") => A#"graph",
 				      (symbol cache) => new CacheTable from {},
           		     	      (symbol baseRings) => {ZZ},    -- this will be for quotients of quotients
-				      (symbol unit) => null,
+				       "unit" => null,
 				      (symbol ideal) => I};
    
    
@@ -1270,11 +1262,11 @@ PathAlgebra / PAIdeal := (A, I) -> (
    B == R := (f,n) -> (lift f) == n;
    R == B := (n,f) -> f == n;
    
-   B.unit = sum B.vertexGens;   
+   B#"unit" = sum B.vertexGens;   
 
    promote (ZZ,B) := 
    promote (QQ,B) := 
-   promote (R,B)  := (r,B) -> r*B.unit;
+   promote (R,B)  := (r,B) -> r*B#"unit";
 
    B
 )
@@ -1410,7 +1402,7 @@ PAMap PAElement := (phi, f) -> (
    oldList := pairs f.terms;
    -- these two finds the edge number of the input path and then find the new edge number of the output path
    newList := for p in oldList list (
-                  if (p#0).vertex =!= null then (p#1)*(phi.vertexMap#((p#0).vertex))
+                  if (p#0)#"vertex" =!= null then (p#1)*(phi.vertexMap#((p#0#"vertex"))
 		  else (p#1)*(product for i in (p#0).edgeList list phi.edgeMap#i)
    	      );
    --newPaths := for p in newList list putInPathAlgebra(phi.target,paPath(phi.target.graph,p));
@@ -1560,7 +1552,7 @@ toString PAElement := f -> (
 
 toString PAPath := f -> (
     edgeList := f.edgeList;
-    if edgeList == {} then return toString f#"graph".vertexLabels#(f.vertex);
+    if edgeList == {} then return toString f#"graph".vertexLabels#(f#"vertex");
     myNet := "";
     tempVar := first edgeList;
     curDegree := 0;
@@ -2474,7 +2466,7 @@ originTerminus(PAElement) := f ->(
     ver := first key;
     if #(key) > 1 then error "Input must be one vertex.";
     if ver.edgeList != {} then error "Input must be a vertex.";
-    vernum := ver.vertex;
+    vernum := ver#"vertex";
     return (select(f.ring.edgeGens, p -> startVertex p == vernum), select(f.ring.edgeGens, p -> endVertex p == vernum))
 )
 
