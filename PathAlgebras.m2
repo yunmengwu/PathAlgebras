@@ -88,10 +88,8 @@ export { "PAPath","paPath", -- not exporting paPath constructor
 	  }
   
 protect vertexLabels
-protect vertex
 protect vertexGens
 protect adjacencyMatrix
-protect component
 protect edgeHash
 protect edgeGens
 protect edgeList
@@ -100,11 +98,6 @@ protect weights
 protect compareTerms
 protect edgeMap
 protect vertexMap
-protect compDegree
-protect componentHash
-protect Mod
-protect modrings
-protect delResults
 protect degreeTerms
 protect ChainLimit
 protect gamma
@@ -1402,7 +1395,7 @@ PAMap PAElement := (phi, f) -> (
    oldList := pairs f.terms;
    -- these two finds the edge number of the input path and then find the new edge number of the output path
    newList := for p in oldList list (
-                  if (p#0)#"vertex" =!= null then (p#1)*(phi.vertexMap#((p#0#"vertex"))
+                  if (p#0#"vertex") =!= null then (p#1)*(phi.vertexMap#(p#0#"vertex"))
 		  else (p#1)*(product for i in (p#0).edgeList list phi.edgeMap#i)
    	      );
    --newPaths := for p in newList list putInPathAlgebra(phi.target,paPath(phi.target.graph,p));
@@ -1419,15 +1412,15 @@ PAMap PAElement := (phi, f) -> (
 paModMon = method()
 paModMon (PAModule,ZZ,PAPath) := (M,n,p)-> (
    if n < 0 then error "Expected a non-negative Mod.";
-   result := new PAModMon from {(symbol component) => n,
-                                (symbol compDegree) => 0,
+   result := new PAModMon from {"component" => n,
+                                "compDegree" => 0,
 				(symbol module) => M,
 				(symbol path) => p};
    result
 )
 
-PAModMon * PAPath := (f,g) -> new PAModMon from  {(symbol component) => f.component,
-                                                  (symbol compDegree) => f.compDegree,
+PAModMon * PAPath := (f,g) -> new PAModMon from  {"component" => f#"component",
+                                                  "compDegree" => f#"compDegree",
 						  (symbol module) => f.module,
 				                  (symbol path) => composePath(f.path,g)};
 
@@ -1441,7 +1434,7 @@ freePAModule (PathAlgebra,ZZ,HashTable) := (A,r,compHash) -> (
    if r <= 0 then error "Expected a positive integer.";
    M := new PAModule from {(symbol ring) => A,
 		           (symbol numgens) => r,
-			   (symbol componentHash) => compHash,
+			   "componentHash" => compHash,
 			   (symbol compareTerms) => (p,q) -> schreyerCompare(compHash,p,q),
 		           (symbol cache) => new CacheTable from {}};
 		       
@@ -1457,7 +1450,7 @@ freePAModule (PathAlgebra,ZZ,HashTable) := (A,r,compHash) -> (
    M - M := (m,n) -> m + (-n);
 
    M * A := (f,g) -> (
-      newHash := combine(f.terms,g.terms,(u,v) -> paModMon(M,u.component,composePath(u.path,v)),times,addVals);
+      newHash := combine(f.terms,g.terms,(u,v) -> paModMon(M,u#"component",composePath(u.path,v)),times,addVals);
       new M from {(symbol terms) => newHash,
 	          (symbol cache) => new CacheTable from {}}
    );
@@ -1496,7 +1489,7 @@ paVector (PAModule,HashTable) := (M, termHash) -> new M from {(symbol terms) => 
 paVector (PAModule,List,List) := (M,coeffs,modmons) -> (
    if #coeffs != #modmons then error "Expected two lists of the same size";
    if #coeffs == 0 then error "Expected a nonempty list";
-   if any(modmons, m -> m.component < 0 or m.component >= M.numgens) then error "Expected indices in correct range.";
+   if any(modmons, m -> m#"component" < 0 or m#"component" >= M.numgens) then error "Expected indices in correct range.";
    R := ring first coeffs;
    if any(coeffs, c -> class c =!= R) then error "Expected a list of elements from the same Ring.";
    paVector (M, hashTable apply(#modmons, i -> (modmons#i,coeffs#i)))
@@ -1523,7 +1516,7 @@ net PAVector := M -> (
     myNet := net "";
     firstTime := true;
     for p in reverse sort pairs M.terms do (
-       myNet = myNet | (if firstTime then net "" else net " + ") | (net p#1) | (net ((p#0).component,(p#0).path));
+       myNet = myNet | (if firstTime then net "" else net " + ") | (net p#1) | (net ((p#0)#"component",(p#0).path));
        firstTime = false;
     );
     myNet
@@ -1618,7 +1611,7 @@ isPrefix (PAVector,PAVector) := (p,q) -> (
 )    
 
 isPrefix (PAModMon,PAModMon) := (p,q) ->(
-    if p.component != q.component then return false;
+    if p#"component" != q#"component" then return false;
     if p.path.edgeList == {} then return (startVertex p.path) == (startVertex q.path);
     return isPrefix(p.path.edgeList,q.path.edgeList)
 )
@@ -1628,7 +1621,7 @@ isSubModMon = method()
 isSubModMon(PAModMon,PAPath) := (f,g) -> isPrefix(f.path.edgeList,g.edgeList)
 
 isSubModMon(PAModMon,PAModMon) := (f,g) -> (
-    if f.component != g.component then return false;
+    if f#"component" != g#"component" then return false;
     
     return isPrefix(f,g)
 )
@@ -1700,7 +1693,7 @@ findOverlapsPAE(PAPath,PAModMon) := (f,g) -> (
 
 --get the list of component of each paModMon of f 
 allComponent = method()
-allComponent(PAVector) := f -> for p in keys f.terms list p.component
+allComponent(PAVector) := f -> for p in keys f.terms list p#"component"
 
 maxComponent = method()
 maxComponent(PAVector) := f -> max allComponent f
@@ -1711,7 +1704,7 @@ leadComponent PAVector := f -> first allComponent leadTerm f
 --input PAVector and component info, get all modmons with that component
 selectComponent = method()
 selectComponent(PAVector,ZZ) := (f,n) -> (
-    modterms := select(pairs f.terms,p->p#0#component == n);
+    modterms := select(pairs f.terms,p->p#0#"component" == n);
     result := new (class f) from {
                                   (symbol terms) => hashTable modterms,
 				  (symbol cache) => new CacheTable from {}
@@ -1739,7 +1732,7 @@ weight PAVector := f -> (
 
 pathDegree PAVector := f -> (
     lmmf := leadModMon f;
-    lmmf.path.degree + lmmf.compDegree
+    lmmf.path.degree + lmmf#"compDegree"
 )
 
 leadPair = method()
@@ -1761,7 +1754,7 @@ terms PAVector := f -> apply(reverse pathTerms f, p -> paVector(class f,{last p}
 pathTerms PAVector := f -> sort pairs f.terms
 
 PAModMon == PAModMon := (p,q) -> (
-   if p.component != q.component then return false;
+   if p#"component" != q#"component" then return false;
    if p.path != q.path then return false;
    true
 )
@@ -1832,7 +1825,7 @@ makeMonic PAVector := m -> ((leadCoefficient m)^(-1))*m
 
 changeLabels = method()
 changeLabels (List,List) := (L, perm) -> apply(L, l -> changeLabels(l,perm))
-changeLabels (PAVector, List) := (m, perm) -> makeMonic paVector(class m, applyKeys(m.terms, k -> paModMon(class m,perm_(k.component),k.path)))
+changeLabels (PAVector, List) := (m, perm) -> makeMonic paVector(class m, applyKeys(m.terms, k -> paModMon(class m,perm_(k#"component"),k.path)))
 
 
 putInPathAlgebra(PathAlgebra,PAVector):= (A,f) -> (
@@ -1889,7 +1882,7 @@ schreyerLeadTerm (PAVector,HashTable) := (f,N) -> (
     --N is a moduleTrack hashtable
     A := (class leadTerm f).ring;
     vecterms := terms f;
-    fullTerms := for p in pathTerms f list (p#1)*(N#((p#0).component))*putInPathAlgebra(A,(p#0).path);
+    fullTerms := for p in pathTerms f list (p#1)*(N#((p#0)#"component"))*putInPathAlgebra(A,(p#0).path);
     ltposition := maxPosition(first changeOfPosition(fullTerms));
     return vecterms#ltposition   
 )
@@ -1898,11 +1891,11 @@ schreyerCompare = method()
 schreyerCompare(HashTable,PAModMon,PAModMon) := (compHash,p,q) -> (
   -- compHash has at least one thing in it, we get the ring from there.
   A := ring compHash#0;
-  schP := compHash#(p.component) * putInPathAlgebra(A,p.path);
-  schQ := compHash#(q.component) * putInPathAlgebra(A,q.path);
+  schP := compHash#(p#"component") * putInPathAlgebra(A,p.path);
+  schQ := compHash#(q#"component") * putInPathAlgebra(A,q.path);
   result := schP ? schQ;
   if result =!= symbol == then return result;
-  p.component ? q.component
+  p#"component"? q#"component"
 )
 
 schreyerCompare(HashTable,PAVector,PAVector) := (compHash,p,q) -> (
@@ -1915,7 +1908,7 @@ schreyerTrack (PAVector,HashTable) := (f,N) -> (
     A := (class leadTerm f).ring;
     vecpair := first terms f;
     mmpair := first pathTerms vecpair;
-    return (last mmpair)*(N#((first mmpair).component))*putInPathAlgebra(A,(first mmpair).path)
+    return (last mmpair)*(N#((first mmpair)#"component"))*putInPathAlgebra(A,(first mmpair).path)
 )
     
 schreyerTerms = method()
@@ -2049,7 +2042,7 @@ overlaps(Sequence,PAElement,ZZ):= (f,q,n) ->(
         if ((length lelq) - L#i) != 0 then (cel := take(lelq,-(length lelq - L#i));
    	                                    c = putInPathAlgebra(A,cel);
                                            );
-	result := (p*c-(F_(lmmp.component))*b*q, apply(track, m -> m*c),f,q,b,c);
+	result := (p*c-(F_(lmmp#"component"))*b*q, apply(track, m -> m*c),f,q,b,c);
 	overlapRelations = overlapRelations | {result};
     ); 
 
@@ -2187,7 +2180,7 @@ reduceOverlap(Sequence,List,List,List):= opts ->(f,F,G,L) -> (
 	--error "err";
 	reducer := 0;
 	-- if a ring relation was used, need to put the relation in a component
-	if ov#0 == 1 then reducer = (F0_((leadModMon tempf).component))*(leadCoefficient tempf)*(ov#3)*(ov#2);
+	if ov#0 == 1 then reducer = (F0_((leadModMon tempf)#"component"))*(leadCoefficient tempf)*(ov#3)*(ov#2);
         if ov#0 == 2 then (--error "err";
 	    	           reducer = (leadCoefficient tempf)*(ov#2)*(ov#3);
 	                   track = flatten for i from 0 to #track -1 list (track#i - (leadCoefficient tempf)*((last F#(ov#1))#i)*(ov#3));
@@ -2278,7 +2271,7 @@ getSyzygies(List,List) := opts -> (M,I) -> (
     M = trackModInit2 M;
     newCompList := sort unique apply(M | M2, m -> first m);
     Mposition := apply(M2,m -> position(newCompList, f' -> f' == first m));
-    compHash := hashTable apply(#newCompList, i -> (i,last sort schreyerTerms(newCompList#i, F.componentHash)));
+    compHash := hashTable apply(#newCompList, i -> (i,last sort schreyerTerms(newCompList#i, F#"componentHash")));
     
     F1 := freePAModule(A,#newCompList,compHash);
 
@@ -2307,7 +2300,7 @@ getSyzMatrix(PAMatrix,List) := opts -> (M,I) -> (
     F0 := M.module;
     getlist := getVecListFromMatrix(M,F0);
     veclist := for p in getlist list sumPAVector(p);
-    compHash := hashTable apply(#veclist, i -> (i,last sort schreyerTerms(veclist#i, (class veclist#i).componentHash)));
+    compHash := hashTable apply(#veclist, i -> (i,last sort schreyerTerms(veclist#i, (class veclist#i)#"componentHash")));
     getsyz := getSyzygies(veclist,I,opts);
     getsyz = getVecFromTrack(getsyz);
     if getsyz == {} then return paMatrix{{0_A}};
@@ -2407,7 +2400,7 @@ getMinSyzMatrix(PAMatrix,List) := opts -> (M,I) -> (
     F0 := M.module;
     getlist := getVecListFromMatrix(M,F0);
     veclist := for p in getlist list sumPAVector(p);
-    compHash := hashTable apply(#veclist, i -> (i,last sort schreyerTerms(veclist#i, (class veclist#i).componentHash)));
+    compHash := hashTable apply(#veclist, i -> (i,last sort schreyerTerms(veclist#i, (class veclist#i)#"componentHash")));
     getsyz := getMinSyzygies(veclist,I,opts);
  
     if getsyz == {} then return paMatrix{{0_A}};
@@ -2762,7 +2755,7 @@ getGammaHash(List,List) := opts -> (G,I) -> (
     --error "err";
     new GAMMA from {
        (symbol terms) => new HashTable from apply(#gamma, i -> (i,gamma#i)),
-       (symbol delResults) => new CacheTable from {},
+       "delResults" => new CacheTable from {},
        --(symbol delResults) => new HashTable from {}
        (symbol ideal) => makeMonic I
     }
@@ -2775,7 +2768,7 @@ getDegreeGammaHash(GAMMA) := GAM -> (
     degreeHash := applyValues(tempHash, p -> apply(p, last));
     new GAMMA from {
        (symbol terms) => GAM.terms,
-       (symbol delResults) => GAM.delResults,
+       "delResults" => GAM#"delResults",
        (symbol ideal) => GAM.ideal,
        (symbol degreeTerms) => degreeHash,
        (symbol degree) => first max keys tempHash
@@ -2791,13 +2784,13 @@ del = method(Options => {DegreeLimit => 6})
 del(GTN,GAMMA) :=  opts -> (f,G) -> (
     I := G.ideal;
     A := (first I).ring;
-    if G.delResults#?f then return (true,G.delResults#f);
+    if G#"delResults"#?f then return (true,G#"delResults"#f);
     n    := f.gamma;
     toDo := {};
     results := {};
     if not member(f,G.terms#n) then error "f should be an element in GAMMA.";
-    if n == 1 then (if not G.delResults#?f then G.delResults#f = {(f.left,f.right)};
-	            return (true,G.delResults#f)
+    if n == 1 then (if not G#"delResults"#?f then G#"delResults"#f = {(f.left,f.right)};
+	            return (true,G#"delResults"#f)
 		    );
     results = results | {(f.left,f.right)} ;
     toDo = apply(last del(f.left,G),m ->(first m,(last m)*(f.right)));
@@ -2823,15 +2816,15 @@ del(GTN,GAMMA) :=  opts -> (f,G) -> (
 	--if n == 5 then error "err2";    	
 	for p in G.terms#(n-1) do (
 	    if not reduced then (
-	    if not G.delResults#?p then del(p,G);
-	    delRes := G.delResults#p;
-	    subGTN := isSubGTN(last G.delResults#p,next);
+	    if not G#"delResults"#?p then del(p,G);
+	    delRes := G#"delResults"#p;
+	    subGTN := isSubGTN(last G#"delResults"#p,next);
 	    --if n == 2 then error "err5";
 	    if subGTN then (
-		delResultPAE = last last G.delResults#p;
+		delResultPAE = last last G#"delResults"#p;
 		nextPAE = last next;		
 		gtncoeff = last prefixOverlap(delResultPAE,nextPAE);
-		newToDo = apply(G.delResults#p,m->(first m,(-1)*(last m)*gtncoeff));
+		newToDo = apply(G#"delResults"#p,m->(first m,(-1)*(last m)*gtncoeff));
 		--if n == 3 then error "err1";		
 	        newResults = newResults|{(p,gtncoeff)};
 		toDo = toDo | newToDo;
@@ -2849,7 +2842,7 @@ del(GTN,GAMMA) :=  opts -> (f,G) -> (
     results = results | apply(newResults, m-> (first m,(-1)*(last m)));
     --results = sort ringInterReduce(results,I);
     results = sortAccordingTo(ringInterReduce(results,I), f -> (f#0#"word") * leadMonomial (f#1));
-    G.delResults#f = results;
+    G#"delResults"#f = results;
     return (true,results)
 )
 -- inputs are of the form (gtn,PAElement)
@@ -2865,7 +2858,7 @@ isSubGTN(List,Sequence) := (L,g) -> isSubGTN(last L, g)
 -- todo: this one only works for 1-1. Need to do the general case.
 delPreImage = method()
 delPreImage(GTN,GAMMA) := (f,G) -> (
-    delPairs := pairs G.delResults;
+    delPairs := pairs G#"delResults";
     for p in delPairs do (if any(last p,m -> first m === f) then return first p);
     error "Not in the image";
 )
@@ -4254,7 +4247,7 @@ N0 = paMatrix {{a_4,a_3}}
 
 Msyz = getSyzygies( {M_0*a_3, M_0*a_4}, I); first Msyz
 Msyz = getSyzygies( {M_0*a_4, M_0*a_3}, I); first Msyz
-peek (leadModMon first last Msyz).module.componentHash
+peek (leadModMon first last Msyz).module#"componentHash"
 
 N1 = getSyzMatrix (N0, I)    -- ok
 N1 = getMinSyzMatrix (N0, I) -- missing one term
