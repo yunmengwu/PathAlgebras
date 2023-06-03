@@ -28,7 +28,6 @@ export { "PAPath","paPath", -- not exporting paPath constructor
 	 "PAModMon","paModMon",
 	 "PAVector","paVector",
 	 "PAModule",
-
 	 "allComponent",
 	 "allSubModMon",
 	 "areComposable",
@@ -87,13 +86,9 @@ export { "PAPath","paPath", -- not exporting paPath constructor
 	 "toUniform"	 
 	  }
   
-protect vertexLabels
 protect vertexGens
 protect adjacencyMatrix
-protect edgeHash
-protect edgeGens
 protect edgeList
-protect edgeLabels
 protect weights
 protect compareTerms
 protect edgeMap
@@ -133,7 +128,6 @@ PAMatrix             = new Type of HashTable
 PAMap                = new Type of HashTable
 PAModMon             = new Type of HashTable
 PAVector             = new Type of HashTable
-
 PathAlgebra          = new Type of Ring
 PathAlgebraQuotient  = new Type of Ring
 PAModule             = new Type of MutableHashTable
@@ -585,9 +579,9 @@ paGraph (List,List,Matrix) := opts -> (verts,edges,adj) -> (
   if not all(myDegrees, c -> ring c === ZZ and c > 0) then error "Expected a list of positive integers for the weight.";
     
   retVal := new PAGraph from {symbol adjacencyMatrix => adj,
-                              symbol vertexLabels => verts,
-			      symbol edgeLabels => edges,
-			      symbol edgeHash => edgeHash',
+                              "vertexLabels" => verts,
+			      "edgeLabels" => edges,
+			      "edgeHash" => edgeHash',
 			      symbol weights => myWeights,
 			      symbol degrees => myDegrees,
 --			      symbol compareTerms => (p,q) -> leftWeightLexCompare(myWeights,p,q)};
@@ -611,7 +605,7 @@ paPath (PAGraph, List) := (G, edgeList') -> (
 )
 
 paPath (PAGraph, ZZ) := (G, p) -> (
-  if p > #(G.vertexLabels) or p < 0 then error "Expected an integer in 0..(#G.vertexLabels)";
+  if p > #(G#"vertexLabels") or p < 0 then error "Expected an integer in 0..(#G.vertexLabels)";
   new PAPath from { "vertex" => p,
                     symbol edgeList => {},
 		    symbol degree => 0,
@@ -640,13 +634,13 @@ PAPath ? PAPath := (p,q) -> p#"graph".compareTerms(p,q)
 endVertex = method()
 endVertex PAPath := p -> (
    if p.edgeList == {} then return p#"vertex";
-   last (p#"graph").edgeHash#(last p.edgeList)
+   last (p#"graph")#"edgeHash"#(last p.edgeList)
 )
 
 startVertex = method()
 startVertex PAPath := p -> (
     if p.edgeList == {} then return p#"vertex";
-    first (p#"graph").edgeHash#(first p.edgeList)
+    first (p#"graph")#"edgeHash"#(first p.edgeList)
 )
 
 areComposable = method()
@@ -842,7 +836,7 @@ Ring PAGraph := (R, G) -> (
    A := new PathAlgebra from {("graph") => G,
            (symbol generators) => {},
        	   (symbol degreesRing) => degreesRing 1,
-           (symbol edgeGens) => {},
+           "edgeGens" => {},
 	   (symbol vertexGens) => {},
 	   (symbol CoefficientRing) => R,
 	   (symbol cache) => new CacheTable from {},
@@ -850,15 +844,15 @@ Ring PAGraph := (R, G) -> (
 	   (symbol degreeLength) => 1,
 	   "unit" => null};
 
-   vertexLabels := G.vertexLabels / baseName;
+   vertexLabels := G#"vertexLabels" / baseName;
    vertexGens := apply(#vertexLabels, i -> putInPathAlgebra(A,paPath(G,i)));
    A.vertexGens = apply(#vertexLabels, i -> (vertexLabels#i) <- vertexGens#i);
 
-   edgeLabels := G.edgeLabels / baseName;
+   edgeLabels := G#"edgeLabels" / baseName;
    edgeGens := apply(#edgeLabels, i -> putInPathAlgebra(A,paPath(G,{i})));
-   A.edgeGens = apply(#edgeLabels, i -> (edgeLabels#i) <- edgeGens#i);
+   A#"edgeGens" = apply(#edgeLabels, i -> (edgeLabels#i) <- edgeGens#i);
 
-   A.generators = A.vertexGens | A.edgeGens;
+   A.generators = A.vertexGens | A#"edgeGens";
    
    A + A := (f,g) -> (
       newHash := merge(f.terms,g.terms,addVals);
@@ -917,12 +911,12 @@ Ring PAGraph := (R, G) -> (
 ideal PathAlgebra := A -> paIdeal {0_A}
     
 numVertices = method()
-numVertices PAGraph := G -> #(G.vertexLabels)
+numVertices PAGraph := G -> #(G#"vertexLabels")
 numVertices PathAlgebraQuotient := 
 numVertices PathAlgebra := A -> numVertices A#"graph"
 
 numEdges = method()
-numEdges PAGraph := G -> #(G.edgeLabels)
+numEdges PAGraph := G -> #(G#"edgeLabels")
 numEdges PathAlgebraQuotient := 
 numEdges PathAlgebra := A -> numEdges A#"graph"
 
@@ -944,7 +938,7 @@ net PAPath := p -> (
    edgeList := p.edgeList;
    
    -- single vertex case
-   if edgeList === {} then return net p#"graph".vertexLabels#(p#"vertex");
+   if edgeList === {} then return net p#"graph"#"vertexLabels"#(p#"vertex");
 
    -- path case
    myNet := net "";
@@ -955,26 +949,26 @@ net PAPath := p -> (
       if e === tempVar then curDegree = curDegree + 1
       else (
         if hasDupe then (
-          nosubscriptNet := net getUnsubVar p#"graph".edgeLabels#tempVar;
+          nosubscriptNet := net getUnsubVar p#"graph"#"edgeLabels"#tempVar;
           emptySpace := horizontalJoin (width nosubscriptNet : " ");
 	  powerNet := emptySpace | (if curDegree == 1 then net "" else (net curDegree));
-	  myNet = myNet | stack( powerNet, net p#"graph".edgeLabels#tempVar);
+	  myNet = myNet | stack( powerNet, net p#"graph"#"edgeLabels"#tempVar);
 	)
         else
-	  myNet = myNet | net p#"graph".edgeLabels#tempVar;
+	  myNet = myNet | net p#"graph"#"edgeLabels"#tempVar;
 	tempVar = e;
         curDegree = 1;
       );
    );
    if hasDupe then (
-     nosubscriptNet := net getUnsubVar p#"graph".edgeLabels#tempVar;
+     nosubscriptNet := net getUnsubVar p#"graph"#"edgeLabels"#tempVar;
      emptySpace := horizontalJoin (width nosubscriptNet : " ");
      powerNet := emptySpace | (if curDegree == 1 then net "" else (net curDegree));
-     myNet = myNet | stack( powerNet, net p#"graph".edgeLabels#tempVar);
+     myNet = myNet | stack( powerNet, net p#"graph"#"edgeLabels"#tempVar);
      myNet^1
    )
    else (
-     myNet = myNet | net p#"graph".edgeLabels#tempVar;
+     myNet = myNet | net p#"graph"#"edgeLabels"#tempVar;
      myNet
    )
 )
@@ -1071,7 +1065,7 @@ paBasisLength(ZZ,PathAlgebra,List) := (n,R,M) -> (
    -- usually, this is used when M is the ideal of lead terms
    -- of some other ideal I
    if R.cache#?("LengthBasis",n,M) then return R.cache#("LengthBasis",n,M);
-   G := R.edgeGens;
+   G := R#"edgeGens";
    g := #G;
    local myBasis;
    if n == 0 then myBasis = R.vertexGens
@@ -1093,7 +1087,7 @@ paBasisDegree(ZZ,PathAlgebra) := (n,R) -> paBasisDegree(n,R,{})
 
 paBasisDegree(ZZ,PathAlgebra,List) := (n,R,M) -> (
    if R.cache#?("DegreeBasis",n,M) then return R.cache#("DegreeBasis",n,M);
-   G := R.edgeGens;
+   G := R#"edgeGens";
    g := #G;
    local myBasis;
    if n == 0 then myBasis = R.vertexGens
@@ -1184,7 +1178,7 @@ PathAlgebra / PAIdeal := (A, I) -> (
    Igb := buchAlgorithm I;
    B := new PathAlgebraQuotient from {(symbol generators) => {},
                                       (symbol vertexGens) => {},
-				      (symbol edgeGens) => {},
+				      "edgeGens" => {},
        			     	      (symbol CoefficientRing) => A.CoefficientRing,
   			     	      (symbol ambient) => A,
                              	      ("graph") => A#"graph",
@@ -1195,15 +1189,15 @@ PathAlgebra / PAIdeal := (A, I) -> (
    
    
    G := B#"graph";
-   vertexLabels := G.vertexLabels / baseName;
+   vertexLabels := G#"vertexLabels" / baseName;
    vertexGens := apply(#vertexLabels, i -> putInPathAlgebra(B,paPath(G,i)));
    B.vertexGens = apply(#vertexLabels, i -> (vertexLabels#i) <- vertexGens#i);
 
-   edgeLabels := G.edgeLabels / baseName;
+   edgeLabels := G#"edgeLabels" / baseName;
    edgeGens := apply(#edgeLabels, i -> putInPathAlgebra(B,paPath(G,{i})));
-   B.edgeGens = apply(#edgeLabels, i -> (edgeLabels#i) <- edgeGens#i);
+   B#"edgeGens" = apply(#edgeLabels, i -> (edgeLabels#i) <- edgeGens#i);
 
-   B.generators = B.vertexGens | B.edgeGens;
+   B.generators = B.vertexGens | B#"edgeGens";
 
    R := A.CoefficientRing;
    
@@ -1266,8 +1260,8 @@ PathAlgebra / PAIdeal := (A, I) -> (
 
 use PathAlgebraQuotient :=
 use PathAlgebra := A -> (
-   scan(A#"graph".vertexLabels, A.vertexGens, (sym,val) -> sym <- val);
-   scan(A#"graph".edgeLabels, A.edgeGens, (sym,val) -> sym <- val);
+   scan(A#"graph"#"vertexLabels", A.vertexGens, (sym,val) -> sym <- val);
+   scan(A#"graph"#"edgeLabels", A#"edgeGens", (sym,val) -> sym <- val);
    A
 )
 
@@ -1545,7 +1539,7 @@ toString PAElement := f -> (
 
 toString PAPath := f -> (
     edgeList := f.edgeList;
-    if edgeList == {} then return toString f#"graph".vertexLabels#(f#"vertex");
+    if edgeList == {} then return toString f#"graph"#"vertexLabels"#(f#"vertex");
     myNet := "";
     tempVar := first edgeList;
     curDegree := 0;
@@ -1553,12 +1547,12 @@ toString PAPath := f -> (
     for v in edgeList do(
         if v == tempVar then curDegree = curDegree + 1
 	else (
-	    myNet = myNet | (toString (f#"graph".edgeLabels)#tempVar) | if curDegree == 1 then "*" else "^" | curDegree | "*";
+	    myNet = myNet | (toString (f#"graph"#"edgeLabels")#tempVar) | if curDegree == 1 then "*" else "^" | curDegree | "*";
             tempVar = v;
 	    curDegree = 1;
 	);
     );
-    myNet | (toString (f#"graph".edgeLabels)#(last edgeList)) | if curDegree == 1 then "" else "^" | curDegree
+    myNet | (toString (f#"graph"#"edgeLabels")#(last edgeList)) | if curDegree == 1 then "" else "^" | curDegree
    
 ) 
       
@@ -2070,7 +2064,7 @@ vertexOverlap(PAVector,List) := (p,track) -> (
     	A := F.ring;
     	lmmp := leadModMon p;
     	lelp := lmmp.path.edgeList;
-	if lelp == {} then lelp = lmmp.path.vertex;
+	if lelp == {} then lelp = lmmp.path#"vertex";
 	for j in vertexlist do (
 	    b := putInPathAlgebra(A,lelp);
 	    olapslist = olapslist | {(0_F,apply(track, m -> m*j),(p,track),j,b,j)};
@@ -2382,7 +2376,7 @@ getVecFromTrack(List) := L -> L / first
 getMinSyzygies = method(Options => {DegreeLimit => 5})
 getMinSyzygies(List,List) := opts -> (M,I) -> (
     F := class M#0;
-    edgeList := F.ring.edgeGens;
+    edgeList := F.ring#"edgeGens";
     Nsyz := getSyzygies(M,I);
     --error "err1";
     NsyzM := select(flatten for p in edgeList list apply(Nsyz, m-> (first m)*p), m -> m != 0);
@@ -2418,7 +2412,7 @@ isWellDefined PAMap := f -> (
    -- as well as checking that the defining ideal goes to zero.
    A := f.source;
    B := f.target;
-   result := all(A.edgeGens, x -> f(verticesLabels x) == verticesLabels(f(x)));
+   result := all(A#"edgeGens", x -> f(verticesLabels x) == verticesLabels(f(x)));
    if not result then return result;
    if instance(A,PathAlgebra) then return true;
    phi := ambient f;
@@ -2460,7 +2454,7 @@ originTerminus(PAElement) := f ->(
     if #(key) > 1 then error "Input must be one vertex.";
     if ver.edgeList != {} then error "Input must be a vertex.";
     vernum := ver#"vertex";
-    return (select(f.ring.edgeGens, p -> startVertex p == vernum), select(f.ring.edgeGens, p -> endVertex p == vernum))
+    return (select(f.ring#"edgeGens", p -> startVertex p == vernum), select(f.ring#"edgeGens", p -> endVertex p == vernum))
 )
 
 edgesOrigin = method()
@@ -3047,7 +3041,7 @@ getVertexInfo (List) := L -> apply(L,m->(m,startVertex m,endVertex m))
     
 edgesEndsAt = method()
 edgesEndsAt (PathAlgebra,ZZ) := (A,n) -> edgesEndsAt(A,(A.vertexGens)#n)
-edgesEndsAt (PathAlgebra,PAElement) := (A,v) -> select(apply(A.edgeGens, m-> m*v),n -> n!=0_A)
+edgesEndsAt (PathAlgebra,PAElement) := (A,v) -> select(apply(A#"edgeGens", m-> m*v),n -> n!=0_A)
 
 --v is the vertex we wants to end at
 --n is the degree of the path
@@ -3055,14 +3049,14 @@ pathsEndsAt = method()
 pathsEndsAt (PathAlgebra,PAElement,ZZ) := (A,v,n) -> (
     results := edgesEndsAt(A,v);
     for m from 2 to n do(
-	results = flatten apply(results, m-> apply(A.edgeGens,n->n*m));
+	results = flatten apply(results, m-> apply(A#"edgeGens",n->n*m));
 	results = select(results,n->n!=0_A);    
     );
     return results
 )
 pathsEndsAt (PathAlgebra,List,ZZ) := (A,L,n) -> (
     for m from 1 to n do(
-	L = flatten apply(L, m-> apply(A.edgeGens,n->n*m));
+	L = flatten apply(L, m-> apply(A#"edgeGens",n->n*m));
 	L = select(L,n->n!=0_A);
     );
     return L
@@ -3449,9 +3443,9 @@ M = paMatrix {{e^2,e*f + g^2},{0_A,-e^2}} -- fix this output!!
 numgensM = numrows M
 numvertsG = numVertices G
 newAdj = (matrix {toList((numvertsG + 1):0)}) || ((transpose matrix {toList(numvertsG : numgensM)}) | adj)
-MG = paGraph({x} | G.vertexLabels, toList(a_(1,1)..a_(numvertsG,numgensM)) | G.edgeLabels, newAdj)
+MG = paGraph({x} | G.vertexLabels, toList(a_(1,1)..a_(numvertsG,numgensM)) | G#"edgeLabels", newAdj)
 MA = R MG
-phi = paMap(MA,A,drop(MA.vertexGens,1),drop(MA.edgeGens,numvertsG*numgensM))
+phi = paMap(MA,A,drop(MA.vertexGens,1),drop(MA#"edgeGens",numvertsG*numgensM))
 entsM = transpose entries M
 IM = paIdeal apply(numcols M, j -> sum apply(numgensM, i -> sum apply(toUniform M_(i,j), u -> a_(startVertex u + 1,i + 1)*(phi u))))
 buchAlgorithm IM
