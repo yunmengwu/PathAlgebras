@@ -85,17 +85,8 @@ export { "PAPath","paPath", -- not exporting paPath constructor
 	 "toRationalFunction",
 	 "toUniform"	 
 	  }
-  
-protect vertexGens
-protect adjacencyMatrix
-protect edgeList
-protect weights
-protect compareTerms
-protect edgeMap
-protect vertexMap
-protect degreeTerms
+      
 protect ChainLimit
-protect gamma
 
 -- ** update this **
 -- Interface:
@@ -140,7 +131,7 @@ leftLexCompare(PAPath,PAPath) := (p,q) -> (
     if length p < length q then return symbol <;
     if length p > length q then return symbol >;
     if length p == length q and length p == 0 then return p#"vertex" ? q#"vertex"
-    else return q.edgeList ? p.edgeList;
+    else return q#"edgeList" ? p#"edgeList";
 );
 
 rightLexCompare = method()
@@ -148,7 +139,7 @@ rightLexCompare(PAPath,PAPath):= (p,q) -> (
     if length p < length q then return symbol <;
     if length p > length q then return symbol >;
     if length p == length q and length p == 0 then return p#"vertex" ? q#"vertex"
-    else return (reverse q.edgeList) ? (reverse p.edgeList);
+    else return (reverse q#"edgeList") ? (reverse p#"edgeList");
 )
 
 leftWeightLexCompare = method()
@@ -187,7 +178,7 @@ PAPath == PAPath := (p,q) -> (
    if p#"graph" =!= q#"graph" then return false;
    if p.weight != q.weight then return false;
    if p.weight == 0 then return p#"vertex" == q#"vertex"
-   else return p.edgeList == q.edgeList;
+   else return p#"edgeList" == q#"edgeList";
 )
 
 --edge list prefix check
@@ -197,7 +188,7 @@ isPrefix (List,List) := (p,q) -> (
     if p == take(q,#p) then return true
     else return false
 )
-isPrefix(PAPath,PAPath) := (p,q) -> isPrefix(p.edgeList,q.edgeList)
+isPrefix(PAPath,PAPath) := (p,q) -> isPrefix(p#"edgeList",q#"edgeList")
 
 --edgelist suffix check
 isSuffix = method()
@@ -206,7 +197,7 @@ isSuffix (List,List) := (p,q) -> (
     if p == take(q,-(#p)) then return true
     else return false
 )
-isSuffix(PAPath,PAPath) := (p,q) -> isSuffix(p.edgeList,q.edgeList)
+isSuffix(PAPath,PAPath) := (p,q) -> isSuffix(p#"edgeList",q#"edgeList")
 
 --check is p is a subword of q and returns the position of first occurrence
 --this allows proper subword
@@ -232,7 +223,7 @@ isSubword (List,List) := (p,q) -> (
 
 --check if p is a subpath of q or q is a subpath of p. returns </> respectively.
 isSubpath = method ()
-isSubpath (PAPath,PAPath) := (p,q) -> isSubword(p.edgeList,q.edgeList)
+isSubpath (PAPath,PAPath) := (p,q) -> isSubword(p#"edgeList",q#"edgeList")
 isSubpath (PAElement,PAElement) := (p,q) ->(
    lelp := leadEdgeList(p);
    lelq := leadEdgeList(q);
@@ -578,42 +569,42 @@ paGraph (List,List,Matrix) := opts -> (verts,edges,adj) -> (
   if #myDegrees != #edges then error "Expected edge degree list to match number of edges.";
   if not all(myDegrees, c -> ring c === ZZ and c > 0) then error "Expected a list of positive integers for the weight.";
     
-  retVal := new PAGraph from {symbol adjacencyMatrix => adj,
+  retVal := new PAGraph from {"adjacencyMatrix" => adj,
                               "vertexLabels" => verts,
 			      "edgeLabels" => edges,
 			      "edgeHash" => edgeHash',
-			      symbol weights => myWeights,
+			      "weights" => myWeights,
 			      symbol degrees => myDegrees,
 --			      symbol compareTerms => (p,q) -> leftWeightLexCompare(myWeights,p,q)};
-			      symbol compareTerms => (p,q) -> leftWeightReverseLexCompare(myWeights,p,q)};
+			      "compareTerms" => (p,q) -> leftWeightReverseLexCompare(myWeights,p,q)};
   retVal  
 )
 
 getWeight = (w,p) -> sum apply(p, i -> w#i)
 getDegree = (w,p) -> sum apply(p, i -> w#i)
 
-net PAGraph := G -> net G.adjacencyMatrix
+net PAGraph := G -> net G#"adjacencyMatrix"
 
 paPath = method()
 paPath (PAGraph, List) := (G, edgeList') -> (
   if edgeList' == {} then error "Expected a nonempty list.";
   new PAPath from { "vertex" => null,
-                    symbol edgeList => edgeList',
+                    "edgeList" => edgeList',
 		    symbol degree => getDegree(G.degrees, edgeList'),
-		    symbol weight => getWeight(G.weights,edgeList'),
+		    symbol weight => getWeight(G#"weights",edgeList'),
                           "graph" => G }
 )
 
 paPath (PAGraph, ZZ) := (G, p) -> (
   if p > #(G#"vertexLabels") or p < 0 then error "Expected an integer in 0..(#G.vertexLabels)";
   new PAPath from { "vertex" => p,
-                    symbol edgeList => {},
+                    "edgeList" => {},
 		    symbol degree => 0,
 		    symbol weight => 0,
                           "graph" => G }
 )
 
-length PAPath := p -> #(p.edgeList)
+length PAPath := p -> #(p#"edgeList")
 removeZeroes := h -> select(h, f -> f != 0)
 
 removeZeropath = method ()
@@ -629,18 +620,18 @@ removeZeropath (List) := L->(
 
 -- only implementing left-lex order for now
 
-PAPath ? PAPath := (p,q) -> p#"graph".compareTerms(p,q)
+PAPath ? PAPath := (p,q) -> p#"graph"#"compareTerms"(p,q)
 
 endVertex = method()
 endVertex PAPath := p -> (
-   if p.edgeList == {} then return p#"vertex";
-   last (p#"graph")#"edgeHash"#(last p.edgeList)
+   if p#"edgeList" == {} then return p#"vertex";
+   last (p#"graph")#"edgeHash"#(last p#"edgeList")
 )
 
 startVertex = method()
 startVertex PAPath := p -> (
-    if p.edgeList == {} then return p#"vertex";
-    first (p#"graph")#"edgeHash"#(first p.edgeList)
+    if p#"edgeList" == {} then return p#"vertex";
+    first (p#"graph")#"edgeHash"#(first p#"edgeList")
 )
 
 areComposable = method()
@@ -667,7 +658,7 @@ composePath (PAPath, PAPath) := (p,q) -> (
    if not areComposable(G,p,q) then continue else (
       if length p > 0 and length q > 0 then (
   	  new PAPath from { "vertex" => null,
-	                    symbol edgeList => p.edgeList | q.edgeList,
+	                    "edgeList" => p#"edgeList" | q#"edgeList",
 			    symbol degree => p.degree + q.degree,
 			    symbol weight => p.weight + q.weight,
                             "graph" => G }
@@ -706,7 +697,7 @@ leadEdgeList PAElement := f -> (
     if #f.terms == 0 then return {};
     
     lpath := leadPath f;
-    lel := lpath.edgeList;
+    lel := lpath#"edgeList";
     f.cache#"leadEdgeList" = lel;
     return lel;
     
@@ -935,7 +926,7 @@ getUnsubVar Symbol := identity
 getUnsubVar IndexedVariable := first
 
 net PAPath := p -> (
-   edgeList := p.edgeList;
+   edgeList := p#"edgeList";
    
    -- single vertex case
    if edgeList === {} then return net p#"graph"#"vertexLabels"#(p#"vertex");
@@ -1379,8 +1370,8 @@ paMap (PathAlgebra, PathAlgebra, List, List) := (B,A,vertexMaps,edgeMaps) -> (
    
    new PAMap from hashTable {(symbol source) => A,
        	                     (symbol target) => B,
-			     (symbol vertexMap) => vertexMaps,
-			     (symbol edgeMap) => edgeMaps} 
+			     "vertexMap" => vertexMaps,
+			     "edgeMap" => edgeMaps} 
 )
 
 PAMap PAElement := (phi, f) -> (
@@ -1389,8 +1380,8 @@ PAMap PAElement := (phi, f) -> (
    oldList := pairs f.terms;
    -- these two finds the edge number of the input path and then find the new edge number of the output path
    newList := for p in oldList list (
-                  if (p#0#"vertex") =!= null then (p#1)*(phi.vertexMap#(p#0#"vertex"))
-		  else (p#1)*(product for i in (p#0).edgeList list phi.edgeMap#i)
+                  if (p#0#"vertex") =!= null then (p#1)*(phi#"vertexMap"#(p#0#"vertex"))
+		  else (p#1)*(product for i in (p#0)#"edgeList" list phi#"edgeMap"#i)
    	      );
    --newPaths := for p in newList list putInPathAlgebra(phi.target,paPath(phi.target.graph,p));
    --if newPaths == {} then return 0_(phi.target)
@@ -1429,7 +1420,7 @@ freePAModule (PathAlgebra,ZZ,HashTable) := (A,r,compHash) -> (
    M := new PAModule from {(symbol ring) => A,
 		           (symbol numgens) => r,
 			   "componentHash" => compHash,
-			   (symbol compareTerms) => (p,q) -> schreyerCompare(compHash,p,q),
+			   "compareTerms" => (p,q) -> schreyerCompare(compHash,p,q),
 		           (symbol cache) => new CacheTable from {}};
 		       
    M + M := (u,v) -> (
@@ -1538,7 +1529,7 @@ toString PAElement := f -> (
 )
 
 toString PAPath := f -> (
-    edgeList := f.edgeList;
+    edgeList := f#"edgeList";
     if edgeList == {} then return toString f#"graph"#"vertexLabels"#(f#"vertex");
     myNet := "";
     tempVar := first edgeList;
@@ -1593,7 +1584,7 @@ toMatrix = method()
 toMatrix PAVector := v -> makeMatrix({v},rank class v)
 
 PAModMon ? PAModMon := (p,q) -> (
-    p.module.compareTerms(p,q)
+    p.module#"compareTerms"(p,q)
     -- position over term (POT) ordering
     --comp := p.component ? q.component;
     --if comp =!= symbol == then comp else p.path ? q.path
@@ -1606,13 +1597,13 @@ isPrefix (PAVector,PAVector) := (p,q) -> (
 
 isPrefix (PAModMon,PAModMon) := (p,q) ->(
     if p#"component" != q#"component" then return false;
-    if p.path.edgeList == {} then return (startVertex p.path) == (startVertex q.path);
-    return isPrefix(p.path.edgeList,q.path.edgeList)
+    if p.path#"edgeList" == {} then return (startVertex p.path) == (startVertex q.path);
+    return isPrefix(p.path#"edgeList",q.path#"edgeList")
 )
 
 --in this case, we only consider if f is a prefix of g
 isSubModMon = method()
-isSubModMon(PAModMon,PAPath) := (f,g) -> isPrefix(f.path.edgeList,g.edgeList)
+isSubModMon(PAModMon,PAPath) := (f,g) -> isPrefix(f.path#"edgeList",g#"edgeList")
 
 isSubModMon(PAModMon,PAModMon) := (f,g) -> (
     if f#"component" != g#"component" then return false;
@@ -1622,10 +1613,10 @@ isSubModMon(PAModMon,PAModMon) := (f,g) -> (
 --only check the leadTerm of a PAElement
 isSubModMon(PAModMon,PAElement) := (f,g) -> isSubModMon(f,leadPath g) 
 
-isSubModMon(PAElement,PAModMon) := (f,g) -> isPrefix((leadPath f).edgeList,g.path.edgeList)
+isSubModMon(PAElement,PAModMon) := (f,g) -> isPrefix((leadPath f)#"edgeList",g.path#"edgeList")
 
-isSubword(PAElement,PAModMon) := (f,g) -> first isSubword((leadPath f).edgeList,g.path.edgeList)
-isSuffix(PAElement,PAModMon) := (f,g) -> isSuffix((leadPath f).edgeList,g.path.edgeList)
+isSubword(PAElement,PAModMon) := (f,g) -> first isSubword((leadPath f)#"edgeList",g.path#"edgeList")
+isSuffix(PAElement,PAModMon) := (f,g) -> isSuffix((leadPath f)#"edgeList",g.path#"edgeList")
 isSuffix(PAElement,PAElement) := (f,g) -> isSuffix(leadEdgeList f,leadEdgeList g)
 
 length PAModMon := f-> length f.path
@@ -1634,24 +1625,24 @@ length PAModMon := f-> length f.path
 -- return a paPath
 findOverlaps(PAModMon,PAModMon) := (f,g) -> (
     if length f == length g then return paPath(f.path#"graph",0)
-    else return paPath(f.path#"graph",drop(g.path.edgeList,length f))
+    else return paPath(f.path#"graph",drop(g.path#"edgeList",length f))
 )
 
 findOverlaps(PAModMon,PAElement) := (f,g) -> findOverlaps(f,leadPath g)
 findOverlaps(PAModMon,PAPath) := (f,g) -> (
     if length f == length g then return paPath(f.path#"graph",0)
-    else return paPath(f.path#"graph",drop(g.edgeList,length f))
+    else return paPath(f.path#"graph",drop(g#"edgeList",length f))
 )
 
 findOverlaps(PAElement,PAModMon) := (f,g) -> (
     fpath := leadPath f;
     if length fpath == length g then return paPath(fpath#"graph",0)
-    else return paPath(fpath#"graph",drop(g.path.edgeList, - (length f)))
+    else return paPath(fpath#"graph",drop(g.path#"edgeList", - (length f)))
 )
 
 findOverlaps(PAPath,PAModMon) := (f,g) -> (
     if length f == length g then return paPath(f#"graph",0)
-    else return paPath(f#"graph",drop(g.path.edgeList,length f))
+    else return paPath(f#"graph",drop(g.path#"edgeList",length f))
 )
 --findOverlaps(PAModMon,PAElement) := (f,g) -> putInPathAlgebra(g.ring,findOverlaps(f,leadPath g))
 
@@ -1660,27 +1651,27 @@ findOverlapsPAE = method()
 findOverlapsPAE(PAModMon,PAModMon) := (f,g) -> (
     A := f.module.ring;
     if length f == length g then return 1_A
-    else return putInPathAlgebra(A,drop(g.path.edgeList,length f))
+    else return putInPathAlgebra(A,drop(g.path#"edgeList",length f))
 )
 
 findOverlapsPAE(PAModMon,PAElement) := (f,g) -> findOverlapsPAE(f,leadPath g)
 findOverlapsPAE(PAModMon,PAPath) := (f,g) -> (
     A := f.module.ring;
     if length f == length g then return 1_A
-    else return putInPathAlgebra(A,drop(g.edgeList,length f))
+    else return putInPathAlgebra(A,drop(g#"edgeList",length f))
 )
 
 findOverlapsPAE(PAElement,PAModMon) := (f,g) -> (
     A := f.ring;
     fpath := leadPath f;
     if length fpath == length g then return 1_A
-    else return putInPathAlgebra(A,drop(g.path.edgeList, - (length f)))
+    else return putInPathAlgebra(A,drop(g.path#"edgeList", - (length f)))
 )
 
 findOverlapsPAE(PAPath,PAModMon) := (f,g) -> (
     A := g.module.ring;
     if length f == length g then return 1_A
-    else return putInPathAlgebra(A,drop(g.path.edgeList,length f))
+    else return putInPathAlgebra(A,drop(g.path#"edgeList",length f))
 )
 
 
@@ -1766,7 +1757,7 @@ PAVector == ZZ := (f,n) -> (
   error "Cannot compare a nonzero integer and a PAVector.";
 )
 
-PAVector ? PAVector := (f,g) -> (class f).compareTerms(f,g)
+PAVector ? PAVector := (f,g) -> (class f)#"compareTerms"(f,g)
 
 stdBasisVector = method()
 stdBasisVector (PAModule,ZZ) := (M,n) -> (
@@ -1995,7 +1986,7 @@ overlaps(PAVector,PAElement,ZZ):= (p,q,n) ->(
     A := F.ring;
     overlapRelations := {};
     lmmp := leadModMon p;
-    lelp := lmmp.path.edgeList;
+    lelp := lmmp.path#"edgeList";
     lelq := leadEdgeList(q);
     -- remove any overlaps that are too long
     L    := select(moduleFindOverlaps(lelp,lelq), l -> #lelq + l <= n);
@@ -2022,7 +2013,7 @@ overlaps(Sequence,PAElement,ZZ):= (f,q,n) ->(
     A := F.ring;
     overlapRelations := {};
     lmmp := leadModMon p;
-    lelp := lmmp.path.edgeList;
+    lelp := lmmp.path#"edgeList";
     lelq := leadEdgeList(q);
     -- remove any overlaps that are too long
     L    := select(moduleFindOverlaps(lelp,lelq), l -> #lelq + l <= n);
@@ -2063,7 +2054,7 @@ vertexOverlap(PAVector,List) := (p,track) -> (
 	F := class p;
     	A := F.ring;
     	lmmp := leadModMon p;
-    	lelp := lmmp.path.edgeList;
+    	lelp := lmmp.path#"edgeList";
 	if lelp == {} then lelp = lmmp.path#"vertex";
 	for j in vertexlist do (
 	    b := putInPathAlgebra(A,lelp);
@@ -2405,7 +2396,7 @@ getMinSyzMatrix(PAMatrix,List) := opts -> (M,I) -> (
 
 PAMap Sequence := (phi,l) -> apply(l,m-> phi m)
 
-ambient PAMap := phi -> paMap(phi.target, ambient phi.source, phi.vertexMap, phi.edgeMap)
+ambient PAMap := phi -> paMap(phi.target, ambient phi.source, phi#"vertexMap", phi#"edgeMap")
 
 isWellDefined PAMap := f -> (
    -- here we check that the image of the vertices defining an edge define the image of the edge,
@@ -2452,7 +2443,7 @@ originTerminus(PAElement) := f ->(
     key := keys f.terms;
     ver := first key;
     if #(key) > 1 then error "Input must be one vertex.";
-    if ver.edgeList != {} then error "Input must be a vertex.";
+    if ver#"edgeList" != {} then error "Input must be a vertex.";
     vernum := ver#"vertex";
     return (select(f.ring#"edgeGens", p -> startVertex p == vernum), select(f.ring#"edgeGens", p -> endVertex p == vernum))
 )
@@ -2497,20 +2488,20 @@ gtn = method()
 gtn (GTN, PAElement) := (L, w) -> (
     new GTN from { (symbol left) => L,
 	                  "word" => L#"word" * w,
-		   (symbol gamma) => L.gamma + 1,
+		   "gamma" => L#"gamma" + 1,
 		   (symbol right) => w }
 )
 gtn PAElement := v -> (
     if not isVertex v then error "Expected a vertex.";
     new GTN from { (symbol left) => null,
 	                  "word" => v,
-		   (symbol gamma) => 0,
+		   "gamma" => 0,
 		   (symbol right) => null }
 )
 
 --need to change networker here: v*g=g does not make sense in 2 vertex case.
 isVertex GTN := g -> g.left === null
-netWorker = g -> if isVertex g then net "" else netWorker(g.left) | (if g.gamma != 1 then net "." else net "") | (net g.right)
+netWorker = g -> if isVertex g then net "" else netWorker(g.left) | (if g#"gamma" != 1 then net "." else net "") | (net g.right)
 net GTN := g -> if isVertex g then (net g#"word") else netWorker(g)
 
 GTN ? GTN := (g,h) -> g#"word" ? h#"word"
@@ -2527,7 +2518,7 @@ GTN ? GTN := (g,h) -> (
 GTN * PAElement := (L,g) -> (
     new GTN from { (symbol left) => L.left,
 	                  "word" => (L#"word") * g,
-		   (symbol gamma) => L.gamma,
+		   "gamma" => L#"gamma",
 		   (symbol right) => (L.right) * g }
 )
 
@@ -2764,7 +2755,7 @@ getDegreeGammaHash(GAMMA) := GAM -> (
        (symbol terms) => GAM.terms,
        "delResults" => GAM#"delResults",
        (symbol ideal) => GAM.ideal,
-       (symbol degreeTerms) => degreeHash,
+       "degreeTerms" => degreeHash,
        (symbol degree) => first max keys tempHash
     }
 )   
@@ -2779,7 +2770,7 @@ del(GTN,GAMMA) :=  opts -> (f,G) -> (
     I := G.ideal;
     A := (first I).ring;
     if G#"delResults"#?f then return (true,G#"delResults"#f);
-    n    := f.gamma;
+    n    := f#"gamma";
     toDo := {};
     results := {};
     if not member(f,G.terms#n) then error "f should be an element in GAMMA.";
@@ -2974,7 +2965,7 @@ sepTensorPairs List := L -> (
 )
 
 length GTN := f -> (
-    if f.gamma == 0 then return 0;
+    if f#"gamma" == 0 then return 0;
     return (length f.left + length f.right)
 )
 
@@ -2989,15 +2980,15 @@ delResultsCheck (GAMMA,Sequence) := (GAM,f) -> (
 -- do we need a multidegree? Currently it used total degree
 bettiTally = method()
 bettiTally(GAMMA) := G -> (
-    if not G#?degreeTerms then G = getDegreeGammaHash(G);
-    new BettiTally from  apply(pairs G.degreeTerms,m-> (last first m,{first first m},first first  m) => #(last m))
+    if not G#?"degreeTerms" then G = getDegreeGammaHash(G);
+    new BettiTally from  apply(pairs G#"degreeTerms",m-> (last first m,{first first m},first first  m) => #(last m))
     -- sum apply(numVertices A, i -> bettiTally(G,i))
 )   
 
 bettiTally(GAMMA, ZZ) := (G,endVert) -> (
-    if not G#?degreeTerms then G = getDegreeGammaHash(G);
+    if not G#?"degreeTerms" then G = getDegreeGammaHash(G);
     -- change to only include those chains that end at endVert
-    new BettiTally from  apply(pairs G.degreeTerms,m-> (last first m,{first first m},first first  m) => #(selectEndVertex(last m,endVert)))
+    new BettiTally from  apply(pairs G#"degreeTerms",m-> (last first m,{first first m},first first  m) => #(selectEndVertex(last m,endVert)))
 )
 
 endVertex GTN := f -> endVertex f#"word"
@@ -3023,7 +3014,7 @@ findReducePositions(BettiTally) := B -> (
 gtnChainList = method()
 gtnChainList (GTN) := g -> (
     results := {g};
-    for n from 2 to g.gamma do (
+    for n from 2 to g#"gamma" do (
 	results = results | {(last results).left};
     );
     return results
@@ -3067,7 +3058,7 @@ pathsEndsAt (PathAlgebra,ZZ,ZZ) := (A,m,n) -> pathsEndsAt(A,(A#"vertexGens")#m,n
 findGAMMABases = method()
 findGAMMABases (GTN,GAMMA) := (g,GAM) -> (
     gtnLength := length g;
-    n := g.gamma;
+    n := g#"gamma";
     A := g#"word".ring;
     --gtn in n-1 chain that have length leq g
     gtnOptions := apply(select(GAM.terms#(n-1), m -> length m <= gtnLength), m->(m,length m));
@@ -3090,7 +3081,7 @@ getReduceTerms(GAMMA,ZZ,ZZ,ZZ) := (G,v,n,m) -> select(G.terms#n, l -> length l =
 getReduceMatrix = method()
 getReduceMatrix(GAMMA,List) := (G,L) -> (
     A := (first L)#"word".ring;
-    n := (first L).gamma;
+    n := (first L)#"gamma";
     return transpose matrix apply(L, l -> (
     --return transpose paMatrix apply(L, l -> (
     	    mutList := new MutableList from toList ((#(G.terms#(n-1))):0_(A.CoefficientRing));
