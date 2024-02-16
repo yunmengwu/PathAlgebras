@@ -4636,11 +4636,6 @@ GAM = getGammaHash({g},I,6)
 allDelta(GAM,6)
 allDeltaMatrices GAM -- TODO
 
--- New for 12.1:
--- (1)ideal info is included in GAMMA 
--- (2)should we delete I in del(f,G,I)? (Yes)
--- (3)makeMonic I in GAMMA
--- (4)problem on line 4324 solved
 
 --Examples:
 
@@ -5055,17 +5050,6 @@ GAMS1 = getGammaHash({a_3},I,DegreeLimit => 15)
 apply(6, i -> getReducedBT(GAMS1,i))
 
 
---overlap example
-restart
-debug needsPackage "PathAlgebras"
-M = matrix {{3}}
-G = paGraph({v},{a,b,c},M)
-R = QQ
-A = R G
-
-I = {a*a*c*c*a*c*c-a*b*c*b,c*c*a*c*c*b-a}
-overlaps(I#0,I#1)
-
 
 
 --S_1 projective resolution
@@ -5093,3 +5077,77 @@ debug needsPackage "PathAlgebras"
 	A = R G
 	putInPathAlgebra(A,{1,2,1})
 paPath(G,0)
+
+--overlap example
+restart
+debug needsPackage "PathAlgebras"
+M = matrix {{3}}
+G = paGraph({v},{a,b,c},M)
+R = QQ
+A = R G
+
+I = {a*a*c*c*a*c*c-a*b*c*b,c*c*a*c*c*b-a}
+overlaps(I#0,I#1)
+
+restart
+debug needsPackage "PathAlgebras"
+M = matrix {{3}}
+G = paGraph({v},{a,b,c},M)
+R = QQ
+A = R G
+
+I = {a*b*c*a*b-a*b*c,c*a*b*a*b-a}
+overlaps(I#0,I#1)
+
+--2/9
+
+restart
+debug needsPackage "PathAlgebras"
+M = matrix {{3}}
+G = paGraph({v},{a,b,c},M,Weights=>{1,1,1})
+kk = ZZ/32003
+R = kk G
+I = paIdeal {2*a*b + 3*b*a + 5*c^2,
+             2*b*c + 3*c*b + 5*a^2,
+             2*c*a + 3*a*c + 5*b^2}
+gbI =  buchAlgorithm(I,DegreeLimit=>7)
+netList sort gbI
+
+
+restart
+uninstallPackage "PathAlgebras"
+restart
+debug needsPackage "PathAlgebras"
+--check PathAlgebras
+installPackage "PathAlgebras"
+viewHelp "PathAlgebras"
+restart
+
+
+restart
+debug needsPackage "PathAlgebras"
+M = matrix {{3}}
+G = paGraph({v},{a,b,c},M,Weights=>{1,1,1})
+kk = ZZ/32003
+R = kk G
+I = paIdeal {2*a*b + 3*b*a + 5*c^2,
+             2*b*c + 3*c*b + 5*a^2,
+             2*c*a + 3*a*c + 5*b^2}
+	 
+K=I.generators
+ov1=overlaps(K#0,K#2)
+ divAlgorithm(K, first values ov1)
+ov2=overlaps(K#1,K#2)
+ov3=overlaps(K#1,K#0)
+
+restart
+debug needsPackage "PathAlgebras"
+	 adj = matrix {{1,1},{0,1}}
+	 G = paGraph({v,w},{e,f,g},adj)
+	 R = QQ
+	 A = R G
+         L = e*f
+	 H = paModMon(A^1,0,paPath(G,{0,0,1,2}))
+	 K = e*e
+	 isSubModMon(L,H)
+	 isSubModMon(K,H)

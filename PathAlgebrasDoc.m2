@@ -2794,7 +2794,7 @@ doc ///
 	 S = R/I
 	 y = putInPathAlgebra(S,paPath(G,{0,0}),3_(kk))
 ///
--*
+
 doc ///
    Key
       isSubModMon
@@ -2812,16 +2812,15 @@ doc ///
       Text
          This command checks if a PAElement is a prefix of a Path Algebra Module Monomial
       Example
-	 adj = matrix {{1,0},{1,1}}
+	 adj = matrix {{1,1},{0,1}}
 	 G = paGraph({v,w},{e,f,g},adj)
 	 R = QQ
 	 A = R G
          L = e*f
-	 H = paModMon(0,paPath(G,{0,0,1,2}))
+	 H = paModMon(A^1,0,paPath(G,{0,0,1,2}))
 	 K = e*e
 	 isSubModMon(L,H)
 	 isSubModMon(K,H)
-
 ///
 
 doc ///
@@ -2840,13 +2839,13 @@ doc ///
       Text
          This command checks if a Path Algebra Module Monomial is a prefix of another
       Example
-	 adj = matrix {{1,0},{1,1}}
+	 adj = matrix {{1,1},{0,1}}
 	 G = paGraph({v,w},{e,f,g},adj)
 	 R = QQ
 	 A = R G
-	 L = paModMon(0,paPath(G,{0,1}))
-	 H = paModMon(0,paPath(G,{0,0,1,2}))
-	 K = paModMon(0,paPath(G,{0,0}))
+	 L = paModMon(A^1,0,paPath(G,{0,1}))
+	 H = paModMon(A^1,0,paPath(G,{0,0,1,2}))
+	 K = paModMon(A^1,0,paPath(G,{0,0}))
 	 isSubModMon(L,H)
 	 isSubModMon(K,H)
 
@@ -2868,13 +2867,13 @@ doc ///
       Text
          This command checks if a Path Algebra Module Monomial is a prefix of a PAPath
       Example
-	 adj = matrix {{1,0},{1,1}}
+	 adj = matrix {{1,1},{0,1}}
 	 G = paGraph({v,w},{e,f,g},adj)
 	 R = QQ
 	 A = R G
-	 L = paModMon(0,paPath(G,{0,1}))
+	 L = paModMon(A^1,0,paPath(G,{0,1}))
 	 H = paPath(G,{0,0,1,2})
-	 K = paModMon(0,paPath(G,{0,0}))
+	 K = paModMon(A^1,0,paPath(G,{0,0}))
 	 isSubModMon(L,H)
 	 isSubModMon(K,H)
 
@@ -2897,18 +2896,18 @@ doc ///
       Text
          This command checks if a Path Algebra Module Monomial is a prefix of a Path Algebra Element
       Example
-	 adj = matrix {{1,0},{1,1}}
+	 adj = matrix {{1,1},{0,1}}
 	 G = paGraph({v,w},{e,f,g},adj)
 	 R = QQ
 	 A = R G
-	 L = paModMon(0,paPath(G,{0,1}))
+	 L = paModMon(A^1,0,paPath(G,{0,1}))
 	 H = e*e*f*g
-	 K = paModMon(0,paPath(G,{0,0}))
+	 K = paModMon(A^1,0,paPath(G,{0,0}))
 	 isSubModMon(L,H)
 	 isSubModMon(K,H)
 
 ///
-*-
+
 doc ///
    Key
       allSubModMon
