@@ -14,42 +14,53 @@ undocumented {(NewFromMethod,PathAlgebra,List),
  	      (putInPathAlgebra,PathAlgebraQuotient,PAPath,ZZ),
 	      (symbol ^, PathAlgebra, ZZ),
 	      (symbol *,PAModMon,PAPath),
-	      toUniform,
-	      (toUniform,PAElement),
-	      (toUniform,PAVector),
-	      toRationalFunction,    
-	      (toRationalFunction,List),
+	      (symbol *,PAModMon,PAElement),
+	      (symbol _,PAModule,ZZ),
+	      findRecurrence,
+	      (findRecurrence,List),
+	      (degrees, PAModule),
+	      (rank, PAModule),	      
+	      freePAModule,
+	      (freePAModule,PathAlgebra,ZZ),
+	      (freePAModule,PathAlgebra,ZZ,HashTable),
+	      (freePAModule,PathAlgebraQuotient,ZZ,HashTable),
+	      getUnsubVar,
+	      (getUnsubVar,IndexedVariable),
+	      (getUnsubVar,Symbol),
+	      getSyzygies,
+	      (getSyzygies,List,List), 
+	      getSyzygiesMatrix,
+	      getMinSyzygies,
+	      (getMinSyzygies,List,List),
+	      getMinSyzMatrix,
+              (getMinSyzMatrix,PAMatrix,List),    
+	      isUniform,
+	      (isUniform,PAElement),
+	      interreduce, 
+	      (interreduce,List),
+	      (isSubpath,PAPath,PAPath),
+	      (isPrefix,PAPath,PAPath),
+	      (isSubword,PAElement,PAModMon),
+	      (leadComponent,PAVector),
+	      (paMatrix,List,HashTable),
+	      paVector,
+	      (paVector,List),
+	      (paVector,PAModule,HashTable),
+	      (paVector,PAModule,List,List),
 	      paHilbertSeries,
 	      (paHilbertSeries,ZZ,PathAlgebra,List),	
 	      paPath,
 	      (paPath,PAGraph, ZZ),
 	      (paPath,PAGraph,List),
-	      getUnsubVar,
-	      (getUnsubVar,IndexedVariable),
-	      (getUnsubVar,Symbol),
-	      findRecurrence,
-	      (findRecurrence,List),
-	      (degrees, PAModule),	      
-	      freePAModule,
-	      (freePAModule,PathAlgebra,ZZ),
-	      (freePAModule,PathAlgebra,ZZ,HashTable),
-	      (freePAModule,PathAlgebraQuotient,ZZ,HashTable),
-	      isUniform,
-	      (isUniform,PAElement),
-	      getSyzygies,
-	      (getSyzygies,List,List),
-	      interreduce, 
-	      (interreduce,List),
 	      removeZeroes,
 	      reduceOverlap,
 	      (reduceOverlap,Sequence,List,List,List),
-	      getSyzygiesMatrix,
-	      getMinSyzygies,
-	      (getMinSyzygies,List,List),
-	      getMinSyzMatrix,
-              (getMinSyzMatrix,PAMatrix,List),
-	      (isSubword,PAElement,PAModMon),
-	      (paMatrix,List,HashTable)
+	      toUniform,
+	      (toUniform,PAElement),
+	      (toUniform,PAVector),
+	      toRationalFunction,    
+	      (toRationalFunction,List)
+
 	      }	     
 
 beginDocumentation()
@@ -78,6 +89,7 @@ doc ///
     Outlines some basic operations on Path Algebras
   Description
     Text
+     The PathAlgebras package contains a number of methods for studying Path Algebras. 
      "TO DO"
     Example
      "TO DO"
@@ -176,16 +188,14 @@ doc ///
     Type of an element in a Path Algebra
   Description
     Text
-     "..."
-  SeeAlso
-     "to do"
+     This is the type of an element in a Path Algebra.
 ///
 
 doc ///
   Key
     PAModMon
   Headline
-    Type of an PAModule
+    Type of an PAModule Monomial
   Description
     Text
      "..."
@@ -201,9 +211,7 @@ doc ///
     Type of a Path Algebra
   Description
     Text 
-     "..."  
-  SeeAlso
-     "to do" 
+     This is the type of a quotient of a Path Algebra 
 ///
 
 doc ///
@@ -326,13 +334,17 @@ doc ///
     Text
        This command allows for the product of composable PAMatrices (or ordinary matrices over the base).
     Example
-       M = matrix {{1,0},{1,1}}
+       M = matrix {{1,1},{0,1}}
        G = paGraph({v,w},{e,f,g},M)
        R = QQ
        A = R G
        N1 = paMatrix{{e,g}}
        N2 = paMatrix{{f,g}}
-       N1 * (transpose N2)
+       L1 = N1 * (transpose N2)
+       N3 = paMatrix {{e,f},{e,g}}
+       M3 = paMatrix {{0_A,f},{0_A,g}}
+       L2 = N3 * M3
+       L3 = M3 * N3
 ///
 
 doc ///
@@ -447,14 +459,18 @@ doc ///
          This exponentiates an NCMatrix.
 	 The input is assumed to be a nonnegative integer at this time.
       Example
-         M = matrix {{1,0},{1,1}}
+         M = matrix {{1,1},{0,1}}
 	 G = paGraph({v,w},{e,f,g},M)
 	 R = QQ
 	 A = R G
 	 M2 = paMatrix {{1_A,f},{0_A,g}}
-	 M2
 	 M2^2
 	 M2^3
+	 N3 = paMatrix {{e,f},{e,g}}
+	 M3 = paMatrix {{0_A,f},{0_A,g}}
+	 M3^2
+	 M3^3
+	 N3^3
 ///
 
 doc ///
@@ -1157,7 +1173,12 @@ doc ///
     Text
       This function finds the lead path of a PAElment.
     Example
-      "TO DO"
+      M = matrix {{1,1},{0,1}}
+      G = paGraph({v,w},{e,f,g},M)
+      R = QQ
+      A = R G
+      L = e*f*g+2*f*g*g+e*f*g*g+e*e*e*f+e*e*f*g
+      K = leadPath L
 
 
 ///
@@ -1179,47 +1200,14 @@ doc ///
     Text
       This function finds the lead edgelist of a PAElement.
     Example
-      "Need Examples here"
+      M = matrix {{1,1},{0,1}}
+      G = paGraph({v,w},{e,f,g},M)
+      R = QQ
+      A = R G
+      L = e*f*g+2*f*g*g+e*f*g*g+e*e*e*f+e*e*f*g
+      K = leadEdgeList L
 
 
-///
-	      
-	      
-doc ///
-  Key
-    pathDegree
-    (pathDegree,PAElement)
-  Headline
-    Find the degree of the lead term of a PAElement.
-  Usage
-    L = pathDegree(f)
-  Inputs
-    f:PAElement
-  Outputs
-    L:ZZ
-  Description
-    Text
-      This function finds the degree of the lead term of a PAElement.
-    Example
-      "TO DO"
-///
-
-doc ///
-  Key
-    (pathDegree,PAVector)
-  Headline
-    Find the degree of the lead term of a PAVector.
-  Usage
-    L = pathDegree(f)
-  Inputs
-    f:PAVector
-  Outputs
-    L:ZZ
-  Description
-    Text
-      This function finds the degree of the lead term of a PAVector.
-    Example
-      "TO DO"
 ///
 
 
@@ -1241,7 +1229,9 @@ doc ///
     L:PAGraph
   Description
     Text 
-      "to do"        
+      This is the 'constructor' for PAGraph objects,
+      where edges are indexed lexicographically using the ordered pair (source, target) of each edge, together with an arbitrary choice 
+      for edges with the same source and target.        
     Example      
       M = matrix {{1,0},{1,1}}
       G = paGraph({v,w},{e,f,g},M,Weights=>{2,1,1},Degrees=>{2,1,1})
@@ -2277,6 +2267,7 @@ doc ///
 	I = {a*a*c*c*a*c*c-a*b*c*b,c*c*a*c*c*b-a}
 	ov = overlaps(I#0,I#1)
 	peek ov
+	ov2 = overlaps(a*b*c*a*b-a*b*c,c*a*b*a*b-a)
 ///
 
 doc ///
@@ -2996,7 +2987,7 @@ doc ///
 	 R = QQ
 	 A = R G
 	 f = 5*x*y*z+3*y*z
-	 g = makeMonic(f)
+	 mm = makeMonic(f)
 	
 ///
 
@@ -3021,10 +3012,35 @@ doc ///
 	 A = R G
 	 F = A^3
 	 f = (F_0)*5*x*y*z+(F_1)*3*y*z
-	 g = makeMonic(f)
+	 mm = makeMonic(f)
 	
 ///
- 	     
+
+doc ///
+   Key
+      (makeMonic,List)
+   Headline
+      Make a list of elements  Monic
+   Usage
+      mm = makeMonic(f)
+   Inputs
+      f : List
+   Outputs
+      mm : List
+   Description
+      Text
+         Make a PAVector Monic
+      Example
+     	 adj = matrix {{3}}
+	 G = paGraph({v},{x,y,z},adj)
+	 R = QQ
+	 A = R G
+	 f = 5*x*y*z+3*y*z
+	 g = 4*x*z*y+2*y*x*z
+	 mm = makeMonic({f,g})
+	 
+	
+///	     
 
 doc ///
    Key
@@ -3093,6 +3109,59 @@ doc ///
 	
 ///
 
+doc ///
+   Key
+      (isPrefix,PAElement,PAElement)
+   Headline
+      A prefix check for PAElements
+   Usage
+      ispre = isPrefix(f,g)
+   Inputs
+      f : PAElement
+      g : PAElement
+
+   Outputs
+      ispre : Boolean
+   Description
+      Text
+        Check if the first PAElement is a prefix of the second.
+      Example
+       	 adj = matrix {{1,1},{0,1}}
+	 G = paGraph({v,w},{e,f,g},adj)
+	 R = QQ
+	 A = R G
+         L = e*f
+	 K = e*f*g
+	 ispre = isPrefix(L,K)
+	
+///
+
+-*
+doc ///
+   Key
+      (isPrefix,PAPath,PAPath)
+   Headline
+      A prefix check for PAPaths
+   Usage
+      ispre = isPrefix(f,g)
+   Inputs
+      f : PAPaths
+      g : PAPaths
+   Outputs
+      ispre : Boolean
+   Description
+      Text
+        Check if the first PAPath is a prefix of the second.
+      Example
+       	 adj = matrix {{1,1},{0,1}}
+	 G = paGraph({v,w},{e,f,g},adj)
+	 R = QQ
+	 A = R G
+         L = paPath(G,{0,1})
+	 K = paPath(G,{0,1,2})
+	 ispre = isPrefix(L,K)
+///
+*-
 
 doc ///
    Key
@@ -3436,6 +3505,7 @@ doc ///
   Key
     buchPAModule
     (buchPAModule,List,List)
+    [buchPAModule,DegreeLimit]
   Headline
     Computes the Grobner Basis of a list of PAVectors
   Usage
@@ -3451,3 +3521,193 @@ doc ///
     Example
      "TODO"
 ///
+
+
+doc ///
+  Key
+   leadMonomial
+    (leadMonomial,PAElement)
+  Headline
+    Find the lead monomial of a PAElement
+  Usage
+    L = leadMonomial(f)
+  Inputs
+    f:PAElement
+  Outputs
+    L:PAElement
+  Description
+    Text
+      This function finds the lead monomial of a PAElment.
+    Example
+      "TO DO"
+
+
+///
+
+doc ///
+  Key
+   leadCoefficient
+    (leadCoefficient,PAElement)
+  Headline
+    Find the leading coefficient of a PAElement
+  Usage
+    L = leadCoefficient(f)
+  Inputs
+    f:PAElement
+  Outputs
+    L:PAElement
+  Description
+    Text
+      This function finds the leading coefficient of a PAElment.
+    Example
+        adj = matrix {{1,1},{0,1}}
+	G = paGraph({v,w},{e,f,g},adj)
+	R = QQ
+	A = R G
+	M = A^2
+	f = 5*e*f+6*e*f*g*g
+	L = leadCoefficient f
+
+
+///
+
+doc ///
+  Key
+    (leadCoefficient,PAVector)
+  Headline
+    Find the leading coefficient of a PAVector
+  Usage
+    L = leadCoefficient(f)
+  Inputs
+    f: PAVector
+  Outputs
+    L: PAVector
+  Description
+    Text
+      This function finds the leading coefficient of a PAVector.
+    Example
+      "TO DO"
+
+
+///
+
+
+doc ///
+   Key
+      (toString, PAElement)
+   Headline
+      Converts an PAElement to a string
+   Usage
+     str = toString f
+   Inputs
+     f : PAElement
+   Outputs
+     str : String
+   Description
+      Text
+        Converts an PAElement to a string.  
+      Example
+        adj = matrix {{1,1},{0,1}}
+	G = paGraph({v,w},{e,f,g},adj)
+	R = QQ
+	A = R G
+	str = toString (e*f*g+e*f)
+///
+
+
+doc ///
+   Key
+      (toString, PAPath)
+   Headline
+      Converts an PAPath to a string
+   Usage
+     str = toString f
+   Inputs
+     f : PAPath
+   Outputs
+     str : String
+   Description
+      Text
+        Converts an PAPath to a string. 
+      Example
+        adj = matrix {{1,1},{0,1}}
+	G = paGraph({v,w},{e,f,g},adj)
+	R = QQ
+	A = R G
+	str = toString leadPath(e*f*g)
+///
+
+doc ///
+   Key
+      (toString, PAVector)
+   Headline
+      Converts an PAVector to a string
+   Usage
+     str = toString f
+   Inputs
+     f : PAVector
+   Outputs
+     str : String
+   Description
+      Text
+        Converts an PAVector to a string. 
+      Example
+        adj = matrix {{1,1},{0,1}}
+	G = paGraph({v,w},{e,f,g},adj)
+	R = QQ
+	A = R G
+	M = A^2
+	E = 5*e*f+6*e*f*g*g
+	D = 4*g*g*g
+	str = toString (M_0*E+M_1*D)
+///
+
+doc ///
+   Key
+      (entries, PAVector)
+   Headline
+      Returns the entries of the PAVector
+   Usage
+      L = entries V
+   Inputs
+      V : PAVector
+   Outputs
+      L : List
+   Description
+      Text
+         Returns the entries of the PAVector as a list of PAElements.
+      Example
+        adj = matrix {{1,1},{0,1}}
+	G = paGraph({v,w},{e,f,g},adj)
+	R = QQ
+	A = R G
+	M = A^2
+	E = 5*e*f+6*e*f*g*g
+	D = 4*g*g*g
+       	entries (M_0*E+M_1*D)
+///
+
+doc ///
+   Key
+      (symbol _, ZZ, PAModule)
+   Headline
+      Create the zero element of a PAModule
+   Usage
+      L = n_M
+   Inputs
+      n : ZZ
+      M : PAModule
+   Outputs
+      L : PAModule
+   Description
+      Text
+         This command create the zero element of a PAModule, the only available value of n is 0.
+      Example
+        M = matrix {{3}}
+	G = paGraph({v},{a,b,c},M,Weights => {1,1,1})
+	R = QQ
+	A = R G
+	N = A^2
+	L = 0_N
+///
+

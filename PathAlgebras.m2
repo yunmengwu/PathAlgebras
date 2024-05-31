@@ -69,7 +69,6 @@ export { "PAPath","paPath", -- not exporting paPath constructor
 	 "paBasisLength",
 	 "paBasisDegree",
 	 "paHilbertSeries",
-	 "pathDegree",
 	 "pathTerms",	
 	 "putInPathAlgebra", 
          "rightLexCompare",
@@ -472,7 +471,7 @@ interreduce List := L -> (
 );
 
 
-buchAlgorithm = method (Options => {DegreeLimit => 5})
+buchAlgorithm = method (Options => {DegreeLimit => 8})
 buchAlgorithm (List) := opts -> (L) -> (
     
     A := ring first L;
@@ -716,11 +715,6 @@ PAElement ? PAElement := (f,g) -> (
 weight = method()
 weight PAElement := f -> (
   (leadPath f).weight
-)
-
-pathDegree = method ()
-pathDegree PAElement := f -> (
-  (leadPath f).degree
 )
 
 leadCoefficient PAElement := f -> (
@@ -1082,10 +1076,10 @@ paBasisDegree(ZZ,PathAlgebra,List) := (n,R,M) -> (
    g := #G;
    local myBasis;
    if n == 0 then myBasis = R#"vertexGens"
-   else if n == 1 then myBasis = select(G, f -> pathDegree(f) == 1 and all(M, m -> not isSubpathOnly(m,f)))
+   else if n == 1 then myBasis = select(G, f -> (length f) == 1 and all(M, m -> not isSubpathOnly(m,f)))
    else (
-      tempList := flatten for g in G list if pathDegree(g) < n then apply(paBasisDegree(n-pathDegree(g),R,M), m -> g*m)
-                                          else if pathDegree(g) == n then {g}
+      tempList := flatten for g in G list if (length g) < n then apply(paBasisDegree(n-(length g),R,M), m -> g*m)
+                                          else if (length g) == n then {g}
 				          else {};
       myBasis = select(tempList, f -> f != 0 and all(M, m -> not isSubpathOnly(m,f)));      
    );
@@ -1715,10 +1709,6 @@ weight PAVector := f -> (
   (leadModMon f).path.weight
 )
 
-pathDegree PAVector := f -> (
-    lmmf := leadModMon f;
-    lmmf.path.degree + lmmf#"compDegree"
-)
 
 leadPair = method()
 leadPair(PAVector) := f -> (
@@ -2178,7 +2168,7 @@ reduceOverlap(Sequence,List,List,List):= opts ->(f,F,G,L) -> (
     else return (rem,track)
 )
 
-getOverlaps = method(Options => {DegreeLimit => 5})
+getOverlaps = method(Options => {DegreeLimit => 8})
 getOverlaps(List,List) := opts -> (M,I) -> (
     F := class first first M;
     overlaps := flatten for f in M list overlapsList(f,I,opts#DegreeLimit);
@@ -2192,7 +2182,7 @@ getOverlaps(List,List) := opts -> (M,I) -> (
 
 -- M is the list of module generators
 -- I is the list of defining equations of the algebra
-buchPAModule = method(Options => {DegreeLimit => 5})
+buchPAModule = method(Options => {DegreeLimit => 8})
 buchPAModule(List,List) := opts -> (M,I) -> (
     --M = sort M;
     --M = for p in M list (makeMonic p);
@@ -2239,7 +2229,7 @@ getTrackMatrix (List) := L ->(
     return transpose paMatrix(allLists)
 )
 
-getSyzygies = method(Options => {DegreeLimit => 5})
+getSyzygies = method(Options => {DegreeLimit => 8})
 getSyzygies(List,List) := opts -> (M,I) -> (
     -- M is the list of module generators
     -- I is the list of defining equations of the algebra
@@ -2277,7 +2267,7 @@ getSyzygies(List,List) := opts -> (M,I) -> (
 )
 
 
-getSyzMatrix = method(Options => {DegreeLimit => 5})
+getSyzMatrix = method(Options => {DegreeLimit => 8})
 getSyzMatrix(PAMatrix,List) := opts -> (M,I) -> (
     A := M.ring;
     -- build a function that builds the component hash for a matrix
@@ -2364,7 +2354,7 @@ PAMap PAMatrix := (phi,M) -> paMatrix applyTable(M.entries,f -> phi f)
 getVecFromTrack = method()
 getVecFromTrack(List) := L -> L / first
 
-getMinSyzygies = method(Options => {DegreeLimit => 5})
+getMinSyzygies = method(Options => {DegreeLimit => 8})
 getMinSyzygies(List,List) := opts -> (M,I) -> (
     F := class M#0;
     edgeList := F.ring#"edgeGens";
@@ -2378,7 +2368,7 @@ getMinSyzygies(List,List) := opts -> (M,I) -> (
 
 )
 
-getMinSyzMatrix = method(Options => {DegreeLimit => 5})
+getMinSyzMatrix = method(Options => {DegreeLimit => 8})
 getMinSyzMatrix(PAMatrix,List) := opts -> (M,I) -> (
     A := M.ring;
 
@@ -2505,16 +2495,7 @@ netWorker = g -> if isVertex g then net "" else netWorker(g.left) | (if g#"gamma
 net GTN := g -> if isVertex g then (net g#"word") else netWorker(g)
 
 GTN ? GTN := (g,h) -> g#"word" ? h#"word"
--*
-GTN ? GTN := (g,h) -> (
-    if length g != length h then return (length g) ? (length h);
-    glist := reverse gtnChainList(g);
-    hlist := reverse gtnChainList(h);
-    glist = apply(glist,m-> m.word);
-    hlist = apply(hlist,m-> m.word);
-    return glist ? hlist
-)
-*-
+
 GTN * PAElement := (L,g) -> (
     new GTN from { (symbol left) => L.left,
 	                  "word" => (L#"word") * g,
@@ -2576,7 +2557,7 @@ gammaOverlap(GTN,List):= (p,L) -> (
 -- this computes all of the Gamma sets up to Gamma_n
 -- I is the list of defining equations of the algebra
 -- n is the chain limit
-getGammas = method(Options => {DegreeLimit => 5,ChainLimit => 8})
+getGammas = method(Options => {DegreeLimit => 8,ChainLimit => 20})
 getGammas(List,List) := opts -> (G,I) -> (
     -- n considered >= 3
     A := (first I).ring;
@@ -2765,7 +2746,7 @@ getDegreeGammaHash(GAMMA) := GAM -> (
 
 --the gtn input should be an element in gamma
 
-del = method(Options => {DegreeLimit => 6})
+del = method(Options => {DegreeLimit => 8})
 del(GTN,GAMMA) :=  opts -> (f,G) -> (
     I := G.ideal;
     A := (first I).ring;
@@ -3160,34 +3141,6 @@ restart
 -- Future TODO: 
 -- 1.Matrix printing
 
--*
-reducer = method()
-reducer (PAElement,PAVector) := (f,g) -> (
-    F := class g;
-    A := F.ring;
-    lmmg:= leadModMon g;
-    return (F_(lmmg.component))*(leadTermCoeff g)*f*putInPathAlgebra(A,findOverlaps(f,lmmg))   
-)
---use f to reduce g
-reducer (PAVector,PAVector) := (f,g) -> (
-    A := (class g).ring;
-    lmmg:= leadModMon g;
-    return (leadTermCoeff g)*f*putInPathAlgebra(A,findOverlaps(leadModMon f,lmmg))   
-)
-    
-
-isSubVector = method()
-isSubVector(PAVector,PAVector) := (f,g) ->(
-    if (leadTerm f > leadTerm g) then return false;
-    if (isSubModMon(leadModMon f,leadModMon g) == false ) then return false;
-    ov:= findOverlaps(leadModMon f,leadModMon g);
-    if f*putInPathAlgebra((class f).ring,ov) == g then return true
-    else return false    
-)
-
-
-*- 
-
 restart
 debug needsPackage "PathAlgebras"
 M = matrix {{3}}
@@ -3325,7 +3278,7 @@ I = paIdeal {2*a*b + 3*b*a + 5*c^2,
              2*b*c + 3*c*b + 5*a^2,
              2*c*a + 3*a*c + 5*b^2}
 	 
-
+I= I.generators
 ov1 = a*I#0 - I#2*c
 overlaps(I#0,I#2)
 red1 = makeMonic first divAlgorithm(gbI, ov1)
@@ -3380,41 +3333,7 @@ composePath:
 	P=paPath(G,{2,2,2})
 	composePath(L,J)
 	
-    
-
-restart
-debug needsPackage "PathAlgebras"
-M = matrix {{1,0},{1,1}}
-G = paGraph({v,w},{e,f,g},M)
-R = QQ
-A = R G
-I=paIdeal{e*f,f*g}
-B = A/I
-N1 = paMatrix {{e,g}}
-N2 = paMatrix {{f,g}}
-N1 + N2
-N1 * (transpose N2)
-N1_(0,0)
-M1 = 2*N1
-N3 = paMatrix {{e,f},{e,g}}
-M3 = paMatrix {{0_A,f},{0_A,g}}
-
-N3 * N3
-
---look at the top left corner of the following
-M3
-M3^2
-M3^3
-
-N3^2
--N3
--2*N3
-N3^3
-
-PAModuleEdgeGens({a},A)
-{e}A
-e/I
-
+   
 --- Build S from the paper (top of page 49)
 
 
@@ -3677,7 +3596,7 @@ F2 = A^#(kerGens)
 
 restart
 debug needsPackage "PathAlgebras"
-adj = matrix {{1,0},{1,1}}
+adj = matrix {{1,1},{0,1}}
 G = paGraph({v,w},{e,f,g},adj)
 R = QQ
 A = R G
@@ -3713,7 +3632,6 @@ selectComponent(d,17)
 selectLeadCom(d)
 
 weight d
-pathDegree d
 listModMon d
 leadModMon d
 leadTermCoeff d
@@ -4249,7 +4167,7 @@ getChangeMatrix Igb
 
 restart
 debug needsPackage "PathAlgebras"
-adj = matrix {{1,0},{1,1}}
+adj = matrix {{1,1},{0,1}}
 G = paGraph({v,w},{e,f,g},adj)
 R = QQ
 A = R G
@@ -4291,29 +4209,6 @@ R = QQ[x]
 foo = value "vector {x^3,x^2,x,1,1}"
 
 
-restart
-debug needsPackage "PathAlgebras"
-adj = matrix {{1,0},{1,1}}
-G = paGraph({v,w},{e,f,g},adj)
-R = QQ
-A = R G
-N = paMatrix {{e,f,g}}
-I = {f*g - g^2}
-M = A^2
-
-toString (v + e)
-
-T = e*f*g+e*f
-E = M_1*T
-S = toString oo
-value S
-
-E = 5*e*f+6*e*f*g*g
-D = 4*g*g*g
-G = toString (M_0*E+M_1*D)
-value G
-
-paVector {T,E}
 
 restart
 debug needsPackage "PathAlgebras"
@@ -4999,7 +4894,7 @@ apply(6, i -> getReducedBT(GAMS3,i))
 
 restart
 debug needsPackage "PathAlgebras"
-adj = matrix {{0,1,0,0,0,0},
+adj = transpose matrix {{0,1,0,0,0,0},
               {1,0,0,0,0,0},
 	      {0,1,0,0,0,0},
 	      {0,1,0,0,0,0},
@@ -5075,53 +4970,19 @@ debug needsPackage "PathAlgebras"
 	G = paGraph({v},{a,b,c},M,Weights => {1,1,1})
 	R = QQ
 	A = R G
+	N = A^2
+	0_N
 	putInPathAlgebra(A,{1,2,1})
 paPath(G,0)
 
---overlap example
-restart
-debug needsPackage "PathAlgebras"
-M = matrix {{3}}
-G = paGraph({v},{a,b,c},M)
-R = QQ
-A = R G
-
-I = {a*a*c*c*a*c*c-a*b*c*b,c*c*a*c*c*b-a}
-overlaps(I#0,I#1)
-
-restart
-debug needsPackage "PathAlgebras"
-M = matrix {{3}}
-G = paGraph({v},{a,b,c},M)
-R = QQ
-A = R G
-
-I = {a*b*c*a*b-a*b*c,c*a*b*a*b-a}
-overlaps(I#0,I#1)
-
---2/9
-
-restart
-debug needsPackage "PathAlgebras"
-M = matrix {{3}}
-G = paGraph({v},{a,b,c},M,Weights=>{1,1,1})
-kk = ZZ/32003
-R = kk G
-I = paIdeal {2*a*b + 3*b*a + 5*c^2,
-             2*b*c + 3*c*b + 5*a^2,
-             2*c*a + 3*a*c + 5*b^2}
-gbI =  buchAlgorithm(I,DegreeLimit=>7)
-netList sort gbI
-
-
-restart
-uninstallPackage "PathAlgebras"
-restart
-debug needsPackage "PathAlgebras"
---check PathAlgebras
-installPackage "PathAlgebras"
-viewHelp "PathAlgebras"
-restart
+        adj = matrix {{1,1},{0,1}}
+	G = paGraph({v,w},{e,f,g},adj)
+	R = QQ
+	A = R G
+	M = A^2
+	E = 5*e*f+6*e*f*g*g
+	D = 4*g*g*g
+        x=M_0*E+M_1*D
 
 
 restart
@@ -5151,3 +5012,111 @@ debug needsPackage "PathAlgebras"
 	 K = e*e
 	 isSubModMon(L,H)
 	 isSubModMon(K,H)
+	 
+restart
+debug needsPackage "PathAlgebras"
+	 adj = matrix {{4}}
+	 G = paGraph({v},{x_1,x_2,x_3,x_4},adj)
+	 R = QQ
+	 A = R G
+	 L = x_1*x_2*x_3-1/2*x_1+1/2*x_2-1/2*x_3
+	 K = x_1*x_2*x_4-1/2*x_1+1/2*x_2-1/2*x_4
+	 L*K
+	 --I = paIdeal{w*x+x*w-1_A,w*y+y*w-1_A,w*z+z*w-1_A,x*y+y*x-1_A,x*z+z*x-1_A,y*z+z*y-1_A}
+	 I ={x_1*x_2+x_2*x_1-1_A,x_1*x_3+x_3*x_1-1_A,x_1*x_4+x_4*x_1-1_A,x_2*x_3+x_3*x_2-1_A,x_2*x_4+x_4*x_2-1_A,x_3*x_4+x_4*x_3-1_A}
+	 divAlgorithm(I,L*K)
+	 M = x_1*x_2-(1/2)_A
+	 N = x_1*x_2*x_3*x_4-1/2*x_1*x_2+1/2*x_1*x_3-1/2*x_1*x_4-1/2*x_2*x_3+1/2*x_2*x_4-1/2*x_3*x_4+1/4
+	 M*N
+	 divAlgorithm(I,M*N)
+	 divAlgorithm(I,L*K-M*N)
+	 
+restart
+debug needsPackage "PathAlgebras" 
+	 adj = matrix {{2}}
+	 G = paGraph({v},{y,z},adj)
+	 kk = ZZ/3
+	 R = kk G
+	 I = {y^3,y*z-z*y,z^3}
+	 B = R/(paIdeal I)
+	 GAMS1 = getGammaHash({y,z},I,DegreeLimit => 15)  -- error on allDeltaMatrices if we put 15 here...
+GAMS1 = getDegreeGammaHash(GAMS1)
+B = bettiTally GAMS1
+apply(6, i -> bettiTally(GAMS1,i))
+bettiTally GAMS1
+bettiTally GAMS1
+
+restart
+debug needsPackage "PathAlgebras"
+adj = transpose matrix {{0,0,0,0,1,1},
+              {1,0,0,0,0,0},
+	      {1,0,0,0,0,0},
+	      {0,1,1,0,0,0},
+	      {0,0,0,1,0,0},
+	      {0,0,0,1,0,0}}
+G = paGraph(toList (v_1..v_6),toList (a_1..a_8),adj,Weights => {1,2,1,1,1,1,1,1})
+R = QQ
+A = R G
+I = { -a_1*a_3 + a_2*a_4, a_4*a_6*a_8*a_2, a_4*a_5*a_7*a_1, a_3*a_6*a_8*a_2, a_3*a_5*a_7*a_1, a_4*a_6*a_8*a_1*a_3, a_3*a_6*a_8*a_1*a_3 }
+GAMS1 = getGammaHash({a_1,a_2},I,DegreeLimit => 15)
+getReducedBT(GAMS1,0)
+apply(6, i -> getReducedBT(GAMS1,i))
+	 
+restart
+debug needsPackage "PathAlgebras" 
+	 adj = matrix {{1}}
+	 G = paGraph({v},{y},adj)
+	 kk = ZZ/3
+	 R = kk G
+	 I = {y^3}
+GAMS1 = getGammaHash({y},I,DegreeLimit => 15)
+getReducedBT(GAMS1,0)
+GAMS2 = getGammaHash({z},I,DegreeLimit => 15)
+getReducedBT(GAMS2,0)
+
+
+restart
+debug needsPackage "PathAlgebras" 
+	 adj = matrix {{3}}
+	 G = paGraph({v},{x,y,z},adj)
+	 kk = ZZ/3
+	 R = kk G
+	 I = {y^3,y*z-z*y,z^3,x*y-y*x,x*z-z*x,x^3}
+GAMS1 = getGammaHash({x,y,z},I,DegreeLimit => 20)
+getReducedBT(GAMS1,0)
+
+restart
+debug needsPackage "PathAlgebras" 
+	 adj = matrix {{1,1,0},{0,1,1},{1,0,1}}
+	 G = paGraph({v_0,v_1,v_2},{z_0,y_0,z_1,y_1,y_2,z_2},adj)
+	 kk = ZZ/3
+	 R = kk G
+	 I = {y_0*y_1*y_2,y_2*y_0*y_1,y_1*y_2*y_0,z_0^3,z_1^3,z_2^3,z_0*y_0-y_0*z_1,z_1*y_1-y_1*z_2,z_2*y_2-y_2*z_0}
+GAMS1 = getGammaHash({z_0,y_0,z_1,y_1,y_2,z_2},I,DegreeLimit => 15)
+getReducedBT(GAMS1,2)
+
+apply(3, i -> bettiTally(GAMS1,i))
+
+apply(3, i -> startVertex y_(i))
+apply(3, i -> endVertex y_(i))
+apply(3, i -> startVertex z_(i))
+apply(3, i -> endVertex z_(i))
+
+
+
+restart
+uninstallPackage "PathAlgebras"
+restart
+debug needsPackage "PathAlgebras"
+--check PathAlgebras
+installPackage "PathAlgebras"
+viewHelp "PathAlgebras"
+restart
+
+restart
+debug needsPackage "PathAlgebras"
+	 adj = matrix {{1,1},{0,1}}
+	 G = paGraph({v,w},{e,f,g},adj)
+	 R = QQ
+	 A = R G
+         L = e*f
